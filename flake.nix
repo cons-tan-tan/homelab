@@ -30,6 +30,7 @@
             buildInputs = [
               terraform
               pkgs.google-cloud-sdk
+              pkgs.talosctl
               pkgs.sops
             ];
           };
