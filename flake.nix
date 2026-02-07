@@ -30,6 +30,7 @@
             buildInputs = [
               terraform
               pkgs.google-cloud-sdk
+              pkgs.kubectl
               pkgs.talosctl
               pkgs.sops
             ];
