@@ -21,6 +21,10 @@ spec:
     ipam:
       mode: kubernetes
     kubeProxyReplacement: true
+    l2announcements:
+      enabled: true
+    externalIPs:
+      enabled: true
     cgroup:
       autoMount:
         enabled: false
