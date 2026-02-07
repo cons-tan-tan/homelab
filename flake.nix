@@ -36,6 +36,7 @@
               pkgs.fluxcd
               pkgs.sops
               pkgs.yq-go
+              pkgs.proxmox-auto-install-assistant
             ];
           };
         }
