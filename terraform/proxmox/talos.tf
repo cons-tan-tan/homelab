@@ -74,12 +74,12 @@ resource "talos_machine_configuration_apply" "nodes" {
 # Control Plane でクラスター初期化
 resource "talos_machine_bootstrap" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = local.vm_list["k8s-cp"].ip
+  node                 = local.vm_list["k8s-cp-02"].ip
 
   depends_on = [talos_machine_configuration_apply.nodes]
 
   lifecycle {
-    replace_triggered_by = [talos_machine_configuration_apply.nodes["k8s-cp"].id]
+    replace_triggered_by = [talos_machine_configuration_apply.nodes["k8s-cp-02"].id]
   }
 }
 
@@ -87,14 +87,14 @@ resource "talos_machine_bootstrap" "this" {
 data "talos_client_configuration" "this" {
   cluster_name         = local.cluster.name
   client_configuration = talos_machine_secrets.this.client_configuration
-  endpoints            = [local.vm_list["k8s-cp"].ip]
+  endpoints            = [local.vm_list["k8s-cp-02"].ip]
   nodes                = [for k, v in local.vm_list : v.ip]
 }
 
 # kubeconfig 取得
 resource "talos_cluster_kubeconfig" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = local.vm_list["k8s-cp"].ip
+  node                 = local.vm_list["k8s-cp-02"].ip
 
   depends_on = [talos_machine_bootstrap.this]
 
