@@ -31,9 +31,11 @@
               terraform
               pkgs.google-cloud-sdk
               pkgs.kubectl
+              pkgs.kubernetes-helm
               pkgs.talosctl
               pkgs.fluxcd
               pkgs.sops
+              pkgs.yq-go
             ];
           };
         }
