@@ -1,7 +1,9 @@
 # Talos Linux nocloud ISO（Secure Boot 対応）
 resource "proxmox_virtual_environment_download_file" "talos_iso" {
-  node_name    = local.node_list.pve01.name
-  datastore_id = local.node_list.pve01.datastore_id
+  for_each = local.node_list
+
+  node_name    = each.value.name
+  datastore_id = each.value.datastore_id
   content_type = "iso"
   url          = "https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.12.2/nocloud-amd64-secureboot.iso"
   file_name    = "talos-v1.12.2-nocloud-amd64-secureboot.iso"
@@ -36,7 +38,7 @@ resource "proxmox_virtual_environment_vm" "talos" {
   # Talos ISO（初回インストール用）
   # Secure Boot では IDE が使えないため SATA バスを使用
   cdrom {
-    file_id   = proxmox_virtual_environment_download_file.talos_iso.id
+    file_id   = proxmox_virtual_environment_download_file.talos_iso[each.value.node_name].id
     interface = "sata0"
   }
 
