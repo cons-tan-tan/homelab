@@ -6,6 +6,11 @@ locals {
     dns_servers = ["192.168.0.1"]
   }
 
+  cluster = {
+    name     = "homelab"
+    endpoint = "https://192.168.2.11:6443"
+  }
+
   node_list = {
     "pve01" = {
       name         = "pve01"
