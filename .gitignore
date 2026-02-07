@@ -1,8 +1,3 @@
-.idea
-.terraform
-terraform/keys/
-
-terraform.tfvars
 # Created by https://www.toptal.com/developers/gitignore/api/direnv
 # Edit at https://www.toptal.com/developers/gitignore?templates=direnv
 
@@ -11,3 +6,6 @@ terraform.tfvars
 .envrc
 
 # End of https://www.toptal.com/developers/gitignore/api/direnv
+
+.kubeconfig
+.talosconfig
