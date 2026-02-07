@@ -31,10 +31,13 @@ resource "proxmox_virtual_environment_vm" "talos" {
     dedicated = each.value.memory
   }
 
-  # Talos ISO からブート
+  # Talos ISO（初回インストール用）
   cdrom {
     file_id = proxmox_virtual_environment_download_file.talos_iso.id
   }
+
+  # ディスク優先でブート（インストール後はディスクから起動）
+  boot_order = ["scsi0", "ide2"]
 
   # ディスク設定
   scsi_hardware = "virtio-scsi-pci"
