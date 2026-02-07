@@ -30,6 +30,19 @@ data "talos_machine_configuration" "nodes" {
         }
       }
     }),
+    # デフォルトの Flannel CNI と kube-proxy を無効化（Cilium で置換するため）
+    yamlencode({
+      cluster = {
+        network = {
+          cni = {
+            name = "none"
+          }
+        }
+        proxy = {
+          disabled = true
+        }
+      }
+    }),
     # Talos v1.12 では HostnameConfig (auto: stable) が自動生成される。
     # machine.network.hostname で上書きしようとすると競合エラーになるため、
     # HostnameConfig ドキュメント自体をパッチして auto: off で無効化する。
