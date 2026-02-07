@@ -65,6 +65,10 @@ resource "talos_machine_configuration_apply" "nodes" {
   node                        = each.value.ip
 
   depends_on = [proxmox_virtual_environment_vm.talos]
+
+  lifecycle {
+    replace_triggered_by = [proxmox_virtual_environment_vm.talos[each.key].mac_addresses]
+  }
 }
 
 # Control Plane でクラスター初期化
@@ -73,6 +77,10 @@ resource "talos_machine_bootstrap" "this" {
   node                 = local.vm_list["k8s-cp"].ip
 
   depends_on = [talos_machine_configuration_apply.nodes]
+
+  lifecycle {
+    replace_triggered_by = [talos_machine_configuration_apply.nodes["k8s-cp"].id]
+  }
 }
 
 # クライアント設定（talosctl用）
@@ -89,4 +97,8 @@ resource "talos_cluster_kubeconfig" "this" {
   node                 = local.vm_list["k8s-cp"].ip
 
   depends_on = [talos_machine_bootstrap.this]
+
+  lifecycle {
+    replace_triggered_by = [talos_machine_bootstrap.this.id]
+  }
 }
