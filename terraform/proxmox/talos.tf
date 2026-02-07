@@ -25,7 +25,8 @@ data "talos_machine_configuration" "nodes" {
           nameservers = local.proxmox.dns_servers
         }
         install = {
-          disk = "/dev/sda"
+          disk  = "/dev/sda"
+          image = "factory.talos.dev/installer-secureboot/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:v1.12.2"
         }
       }
     }),

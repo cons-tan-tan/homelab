@@ -1,10 +1,10 @@
-# Talos Linux nocloud ISO
+# Talos Linux nocloud ISO（Secure Boot 対応）
 resource "proxmox_virtual_environment_download_file" "talos_iso" {
   node_name    = local.node_list.pve01.name
   datastore_id = local.node_list.pve01.datastore_id
   content_type = "iso"
-  url          = "https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.12.2/nocloud-amd64.iso"
-  file_name    = "talos-v1.12.2-nocloud-amd64.iso"
+  url          = "https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.12.2/nocloud-amd64-secureboot.iso"
+  file_name    = "talos-v1.12.2-nocloud-amd64-secureboot.iso"
 }
 
 resource "proxmox_virtual_environment_vm" "talos" {
@@ -18,9 +18,11 @@ resource "proxmox_virtual_environment_vm" "talos" {
   bios    = "ovmf"
   machine = "q35"
 
+  # Secure Boot: 鍵を事前登録しない（セットアップモードで起動し、Talos が自動登録する）
   efi_disk {
-    datastore_id = local.node_list[each.value.node_name].datastore_id
-    type         = "4m"
+    datastore_id      = local.node_list[each.value.node_name].datastore_id
+    type              = "4m"
+    pre_enrolled_keys = false
   }
 
   cpu {
@@ -32,12 +34,14 @@ resource "proxmox_virtual_environment_vm" "talos" {
   }
 
   # Talos ISO（初回インストール用）
+  # Secure Boot では IDE が使えないため SATA バスを使用
   cdrom {
-    file_id = proxmox_virtual_environment_download_file.talos_iso.id
+    file_id   = proxmox_virtual_environment_download_file.talos_iso.id
+    interface = "sata0"
   }
 
   # ディスク優先でブート（インストール後はディスクから起動）
-  boot_order = ["scsi0", "ide2"]
+  boot_order = ["scsi0", "sata0"]
 
   # ディスク設定
   scsi_hardware = "virtio-scsi-pci"
@@ -53,9 +57,11 @@ resource "proxmox_virtual_environment_vm" "talos" {
     bridge = "vmbr0"
   }
 
-  # ネットワーク設定
+  # ネットワーク設定（nocloud）
+  # Secure Boot では IDE が使えないため SATA バスを使用
   initialization {
     datastore_id = local.node_list[each.value.node_name].datastore_id
+    interface    = "sata1"
     ip_config {
       ipv4 {
         address = "${each.value.ip}/${local.proxmox.subnet_mask}"
