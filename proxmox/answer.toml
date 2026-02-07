@@ -1,0 +1,33 @@
+[global]
+keyboard = "jp"
+country = "jp"
+fqdn = "pve02.local"
+mailto = "root@pve02.local"
+timezone = "Asia/Tokyo"
+# Generate with: openssl passwd -6 'YOUR_PASSWORD'
+root-password-hashed = "$6$YOUR_HASH"
+root-ssh-keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKm+q7Q7YZOPoBRbEzJ7wIYKkUFrhmpIYk4PMn/obPnq openpgp:0xDA49D92C",
+]
+reboot-on-error = true
+
+# Post-install: run the following on each node to disable enterprise repos,
+# enable no-subscription repos, and remove subscription nag dialog:
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)"
+
+[network]
+source = "from-answer"
+cidr = "192.168.1.2/20"
+dns = "192.168.0.1"
+gateway = "192.168.1.1"
+# Match any Ethernet interface (2.5G LAN port with cable connected will be selected)
+filter.ID_NET_NAME = "en*"
+
+[disk-setup]
+filesystem = "ext4"
+# Use first available NVMe device
+filter.DEVNAME = "/dev/nvme*"
+
+[disk-setup.lvm]
+swapsize = 8
+maxvz = 0
