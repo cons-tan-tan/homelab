@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
     bucket = "constantan-homelab-tfstate"
-    prefix = "proxmox"
+    prefix = "proxmox/k8s"
   }
 }

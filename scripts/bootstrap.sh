@@ -4,13 +4,13 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # 1. Proxmox/Talos クラスタ構築
-terraform -chdir="${REPO_ROOT}/terraform/proxmox" init
-terraform -chdir="${REPO_ROOT}/terraform/proxmox" apply -auto-approve
+terraform -chdir="${REPO_ROOT}/terraform/proxmox/k8s" init
+terraform -chdir="${REPO_ROOT}/terraform/proxmox/k8s" apply -auto-approve
 
 # 2. kubeconfig 取得
 KUBECONFIG_FILE=$(mktemp)
 trap 'rm -f "${KUBECONFIG_FILE}"' EXIT
-terraform -chdir="${REPO_ROOT}/terraform/proxmox" output -raw kubeconfig > "${KUBECONFIG_FILE}"
+terraform -chdir="${REPO_ROOT}/terraform/proxmox/k8s" output -raw kubeconfig > "${KUBECONFIG_FILE}"
 export KUBECONFIG="${KUBECONFIG_FILE}"
 
 # 3. Kubernetes API サーバーの起動を待機
