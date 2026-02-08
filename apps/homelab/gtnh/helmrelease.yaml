@@ -16,19 +16,19 @@ spec:
     minecraftServer:
       eula: "TRUE"
       type: "GTNH"
-      memory: "8G"
+      memory: "12G"
       serviceType: LoadBalancer
       rcon:
         enabled: true
     extraEnv:
       GTNH_PACK_VERSION: "2.8.4"
-      JVM_OPTS: "-Dfml.queryResult=confirm"
+      JVM_OPTS: "-Dfml.queryResult=confirm -XX:+UseCompactObjectHeaders"
     resources:
       requests:
-        memory: 10Gi
+        memory: 14Gi
         cpu: "2"
       limits:
-        memory: 13Gi
+        memory: 20Gi
     persistence:
       dataDir:
         enabled: true
