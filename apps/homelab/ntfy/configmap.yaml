@@ -13,5 +13,6 @@ data:
     attachment-total-size-limit: "1G"
     attachment-file-size-limit: "15M"
     attachment-expiry-duration: "3h"
+    upstream-base-url: "https://ntfy.sh"
     keepalive-interval: "45s"
     log-level: info
