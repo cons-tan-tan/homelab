@@ -4,6 +4,10 @@ resources:
   - namespace.yaml
   - pv.yaml
   - pvc.yaml
-  - configmap.yaml
   - deployment.yaml
   - service.yaml
+configMapGenerator:
+  - name: ntfy-config
+    namespace: ntfy
+    files:
+      - server.yml
