@@ -5,6 +5,7 @@ metadata:
   namespace: ntfy
 spec:
   type: LoadBalancer
+  loadBalancerIP: "192.168.2.241"
   selector:
     app: ntfy
   ports:

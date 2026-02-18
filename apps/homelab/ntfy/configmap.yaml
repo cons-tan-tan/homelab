@@ -5,6 +5,7 @@ metadata:
   namespace: ntfy
 data:
   server.yml: |
+    base-url: "http://192.168.2.241"
     listen-http: ":80"
     cache-file: /var/cache/ntfy/cache.db
     cache-duration: "12h"
