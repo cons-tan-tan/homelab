@@ -16,6 +16,10 @@ resource "proxmox_virtual_environment_vm" "talos" {
   node_name = each.value.node_name
   vm_id     = each.value.vm_id
 
+  agent {
+    enabled = true
+  }
+
   # UEFI ブート設定
   bios    = "ovmf"
   machine = "q35"
