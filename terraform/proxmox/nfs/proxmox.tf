@@ -12,6 +12,10 @@ resource "proxmox_virtual_environment_vm" "nfs" {
   node_name = local.vm.node_name
   vm_id     = local.vm.vm_id
 
+  agent {
+    enabled = true
+  }
+
   cpu {
     cores = local.vm.cpu_cores
     type  = "host"
