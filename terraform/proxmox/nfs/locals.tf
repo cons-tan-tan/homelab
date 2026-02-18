@@ -24,7 +24,7 @@ locals {
     node_name = "pve02"
     vm_id     = 2201
     cpu_cores = 2
-    memory    = 2048
+    memory    = 8192
     disk_size = 200
     ip        = "192.168.2.31"
   }

@@ -3,7 +3,7 @@ resource "proxmox_virtual_environment_download_file" "debian_cloud_image" {
   node_name    = local.vm.node_name
   datastore_id = local.node_list[local.vm.node_name].datastore_id
   content_type = "iso"
-  url          = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
+  url          = "https://cloud.debian.org/images/cloud/bookworm/20260129-2372/debian-12-generic-amd64-20260129-2372.qcow2"
   file_name    = "debian-12-generic-amd64.img"
 }
 
@@ -52,5 +52,9 @@ resource "proxmox_virtual_environment_vm" "nfs" {
       domain  = local.proxmox.dns_domain
       servers = local.proxmox.dns_servers
     }
+  }
+
+  lifecycle {
+    ignore_changes = [disk[0].file_id]
   }
 }
