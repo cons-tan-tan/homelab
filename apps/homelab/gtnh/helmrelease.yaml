@@ -16,19 +16,70 @@ spec:
     minecraftServer:
       eula: "TRUE"
       type: "GTNH"
-      memory: "12G"
+      memory: "16G"
       serviceType: LoadBalancer
       rcon:
         enabled: true
     extraEnv:
       GTNH_PACK_VERSION: "2.8.4"
-      JVM_OPTS: "-Dfml.queryResult=confirm -XX:+UseCompactObjectHeaders"
+      # === JVM GC Tuning for GTNH (16G heap) ===
+      # ref: https://docs.papermc.io/paper/aikars-flags
+      # ref: https://gtnh.miraheze.org/wiki/Low_End_PCs#JVM_Arguments
+      #
+      # --- 既存 ---
+      # -Dfml.queryResult=confirm                    : FML確認ダイアログ自動応答
+      # -XX:+UseCompactObjectHeaders                 : オブジェクトヘッダ圧縮 (JDK 21+)
+      #
+      # --- Aikar's Flags (そのまま) ---
+      # -XX:+UnlockExperimentalVMOptions             : 実験的VMオプションの有効化
+      # -XX:+DisableExplicitGC                       : modからのSystem.gc()呼び出しを無効化
+      # -XX:+ParallelRefProcEnabled                  : 参照処理を並列化しpause短縮
+      # -XX:+AlwaysPreTouch                          : 起動時にヒープ全体を確保
+      # -XX:+PerfDisableSharedMem                    : GC統計のファイル書き込み無効化 (Disk I/O遅延防止)
+      # -XX:G1NewSizePercent=30                      : Young領域の最小割合
+      # -XX:G1MaxNewSizePercent=40                   : Young領域の最大割合
+      # -XX:G1HeapRegionSize=8M                      : G1リージョンサイズ
+      # -XX:G1ReservePercent=20                      : GC予約領域
+      # -XX:G1HeapWastePercent=5                     : 回収対象Region判定の閾値
+      # -XX:G1MixedGCCountTarget=4                   : Mixed GCの分散回数
+      # -XX:InitiatingHeapOccupancyPercent=15        : Old領域GC開始閾値
+      # -XX:G1MixedGCLiveThresholdPercent=90         : 生存率閾値
+      # -XX:G1RSetUpdatingPauseTimePercent=5         : RSet更新のpause時間上限
+      # -XX:SurvivorRatio=32                         : Eden/Survivor比
+      # -XX:MaxTenuringThreshold=1                   : Survivor生存回数上限
+      #
+      # --- GTNH wiki のみ ---
+      # -Dsun.rmi.dgc.server.gcInterval=2147483646   : RMI経由のFull GCを実質無効化
+      #
+      # --- 調整 (Aikar's=200, wiki=80 → GTNH向け中間値) ---
+      # -XX:MaxGCPauseMillis=130                     : GC pause目標上限
+      JVM_OPTS: >-
+        -Dfml.queryResult=confirm
+        -XX:+UseCompactObjectHeaders
+        -XX:+UnlockExperimentalVMOptions
+        -XX:+DisableExplicitGC
+        -XX:+ParallelRefProcEnabled
+        -XX:+AlwaysPreTouch
+        -XX:+PerfDisableSharedMem
+        -XX:G1NewSizePercent=30
+        -XX:G1MaxNewSizePercent=40
+        -XX:G1HeapRegionSize=8M
+        -XX:G1ReservePercent=20
+        -XX:G1HeapWastePercent=5
+        -XX:G1MixedGCCountTarget=4
+        -XX:InitiatingHeapOccupancyPercent=15
+        -XX:G1MixedGCLiveThresholdPercent=90
+        -XX:G1RSetUpdatingPauseTimePercent=5
+        -XX:SurvivorRatio=32
+        -XX:MaxTenuringThreshold=1
+        -Dsun.rmi.dgc.server.gcInterval=2147483646
+        -XX:MaxGCPauseMillis=130
     resources:
       requests:
-        memory: 14Gi
+        memory: 18Gi
         cpu: "2"
       limits:
-        memory: 20Gi
+        memory: 24Gi
     persistence:
       dataDir:
         enabled: true
