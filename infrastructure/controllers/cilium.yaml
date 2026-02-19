@@ -25,6 +25,10 @@ spec:
       enabled: true
     externalIPs:
       enabled: true
+    ingressController:
+      enabled: true
+      default: true
+      loadbalancerMode: shared
     cgroup:
       autoMount:
         enabled: false
