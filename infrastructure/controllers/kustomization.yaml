@@ -5,7 +5,9 @@ resources:
   - cilium.yaml
   - csi-nfs-repo.yaml
   - csi-nfs.yaml
+  - cert-manager-namespace.yaml
   - cert-manager-repo.yaml
   - cert-manager.yaml
+  - external-dns-namespace.yaml
   - external-dns-repo.yaml
   - external-dns.yaml
