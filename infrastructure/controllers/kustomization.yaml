@@ -9,5 +9,6 @@ resources:
   - cert-manager-repo.yaml
   - cert-manager.yaml
   - external-dns-namespace.yaml
+  - external-dns-cloudflare-api-token.yaml
   - external-dns-repo.yaml
   - external-dns.yaml
