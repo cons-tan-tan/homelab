@@ -3,3 +3,5 @@ kind: Kustomization
 resources:
   - cilium-l2-policy.yaml
   - cilium-ip-pool.yaml
+  - cloudflare-api-token.yaml
+  - cert-manager-clusterissuer.yaml
