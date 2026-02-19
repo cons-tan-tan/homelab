@@ -7,3 +7,5 @@ resources:
   - csi-nfs.yaml
   - cert-manager-repo.yaml
   - cert-manager.yaml
+  - external-dns-repo.yaml
+  - external-dns.yaml

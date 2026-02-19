@@ -5,3 +5,4 @@ resources:
   - cilium-ip-pool.yaml
   - cloudflare-api-token.yaml
   - cert-manager-clusterissuer.yaml
+  - external-dns-cloudflare-api-token.yaml
