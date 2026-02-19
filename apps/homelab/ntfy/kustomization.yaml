@@ -6,6 +6,7 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
+  - ingress.yaml
 configMapGenerator:
   - name: ntfy-config
     namespace: ntfy
