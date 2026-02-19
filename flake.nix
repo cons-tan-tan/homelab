@@ -35,6 +35,7 @@
               pkgs.talosctl
               pkgs.fluxcd
               pkgs.sops
+              pkgs.age
               pkgs.yq-go
               pkgs.proxmox-auto-install-assistant
             ];

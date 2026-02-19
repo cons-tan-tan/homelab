@@ -33,5 +33,10 @@ helm install flux2 oci://ghcr.io/fluxcd-community/charts/flux2 \
   --create-namespace \
   --wait
 
-# 6. Flux 同期設定を適用
+# 6. SOPS 復号用の age 鍵を Flux に登録
+kubectl create secret generic sops-age \
+  --namespace=flux-system \
+  --from-file=age.agekey="${REPO_ROOT}/keys.txt"
+
+# 7. Flux 同期設定を適用
 kubectl apply -f "${REPO_ROOT}/clusters/homelab/gotk-sync.yaml"

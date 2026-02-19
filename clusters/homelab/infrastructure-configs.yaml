@@ -11,5 +11,9 @@ spec:
   path: ./infrastructure/configs
   prune: true
   wait: true
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   dependsOn:
     - name: infrastructure-controllers
