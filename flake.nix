@@ -35,6 +35,7 @@
               pkgs.kubernetes-helm
               pkgs.talosctl
               pkgs.fluxcd
+              pkgs.ansible
               pkgs.sops
               pkgs.age
               pkgs.yq-go
