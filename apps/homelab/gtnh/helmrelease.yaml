@@ -13,11 +13,13 @@ spec:
         name: itzg-minecraft
         namespace: flux-system
   values:
+    serviceAnnotations:
+      mc-router.itzg.me/externalServerName: "gtnh.constantan.dev,gtnh.i.constantan.dev"
     minecraftServer:
       eula: "TRUE"
       type: "GTNH"
       memory: "16G"
-      serviceType: LoadBalancer
+      serviceType: ClusterIP
       rcon:
         enabled: true
     extraEnv:
