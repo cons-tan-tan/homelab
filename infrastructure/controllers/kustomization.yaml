@@ -12,3 +12,7 @@ resources:
   - external-dns-cloudflare-api-token.yaml
   - external-dns-repo.yaml
   - external-dns.yaml
+  - tailscale-namespace.yaml
+  - tailscale-oauth-secret.yaml
+  - tailscale-repo.yaml
+  - tailscale.yaml
