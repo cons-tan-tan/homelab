@@ -30,6 +30,7 @@
             buildInputs = [
               terraform
               pkgs.google-cloud-sdk
+              pkgs.oci-cli
               pkgs.kubectl
               pkgs.kubernetes-helm
               pkgs.talosctl
