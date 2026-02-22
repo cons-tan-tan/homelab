@@ -14,12 +14,13 @@ spec:
         namespace: flux-system
   values:
     serviceAnnotations:
-      mc-router.itzg.me/externalServerName: "gtnh.constantan.dev,gtnh.i.constantan.dev"
+      mc-router.itzg.me/externalServerName: "gtnh.constantan.dev"
+      external-dns.alpha.kubernetes.io/hostname: "gtnh.i.constantan.dev"
     minecraftServer:
       eula: "TRUE"
       type: "GTNH"
       memory: "16G"
-      serviceType: ClusterIP
+      serviceType: LoadBalancer
       rcon:
         enabled: true
     extraEnv:
