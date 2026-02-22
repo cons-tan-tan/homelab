@@ -35,7 +35,8 @@
               pkgs.kubernetes-helm
               pkgs.talosctl
               pkgs.fluxcd
-              pkgs.ansible
+              # そのまま入れるとPATHが肥大化するのでPython環境に入れる
+              (pkgs.python3.withPackages (ps: [ ps.ansible-core ]))
               pkgs.sops
               pkgs.age
               pkgs.yq-go
