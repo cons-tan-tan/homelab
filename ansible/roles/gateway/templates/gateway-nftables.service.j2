@@ -1,0 +1,17 @@
+# ExecStartPre: OCI デフォルトの REJECT を削除する
+# nftables の accept は別テーブルの reject を止められないため必要
+# "-" prefix: ルールが存在しない場合のエラーを無視
+
+[Unit]
+Description=Gateway nftables rules
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStartPre=-/usr/sbin/iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
+ExecStart=/usr/sbin/nft -f /etc/nftables.d/gateway.nft
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

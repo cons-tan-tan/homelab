@@ -1,3 +1,9 @@
-- name: Save iptables rules
-  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4
+- name: Apply gateway nftables rules
+  ansible.builtin.command: nft -f /etc/nftables.d/gateway.nft
   changed_when: true
+
+- name: Enable gateway nftables service
+  ansible.builtin.systemd:
+    name: gateway-nftables
+    enabled: true
+    daemon_reload: true

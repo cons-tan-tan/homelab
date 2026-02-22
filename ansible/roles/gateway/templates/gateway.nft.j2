@@ -1,0 +1,37 @@
+#!/usr/sbin/nft -f
+#
+# Gateway: VPS をゲームサーバーへのリバースプロキシとして構成する
+#
+# トラフィックフロー:
+#   Client --> VPS:port --> [DNAT] --> Tailscale --> K8s mc-router --> Game Server
+#   Client <-- VPS:port <-- [un-NAT] <-- Tailscale <-- K8s mc-router <-- Game Server
+#
+# Tailscale が管理する filter テーブル (ts-forward 等) とは
+# 独立したテーブルで全ルールを管理する。
+
+table ip gateway
+delete table ip gateway
+
+table ip gateway {
+
+  # 外部トラフィックを K8s の Tailscale IP へ DNAT
+  chain prerouting {
+    type nat hook prerouting priority dstnat; policy accept;
+{% for port in forwarded_ports %}
+    iif {{ ansible_facts['default_ipv4']['interface'] }} tcp dport {{ port }} dnat to {{ k8s_tailscale_ip }} comment "Forward port {{ port }} to K8s"
+{% endfor %}
+  }
+
+  # Tailscale トンネル (MTU 1280) に合わせて MSS をクランプ
+  # MSS = 1280 - IP(20) - TCP(20) = 1240
+  chain mss_clamp {
+    type filter hook forward priority mangle; policy accept;
+    tcp flags syn / syn,rst tcp option maxseg size set 1240
+  }
+
+  # 送信元 IP を VPS の Tailscale IP に書き換え
+  chain postrouting {
+    type nat hook postrouting priority srcnat; policy accept;
+    ip daddr {{ k8s_tailscale_ip }} masquerade
+  }
+}
