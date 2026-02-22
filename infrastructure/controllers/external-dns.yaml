@@ -28,5 +28,6 @@ spec:
     txtOwnerId: homelab
     sources:
       - ingress
+      - service
     domainFilters:
       - constantan.dev
