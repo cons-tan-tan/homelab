@@ -1,0 +1,53 @@
+- name: Enable IP forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_set: true
+    state: present
+    reload: true
+
+- name: Install iptables-persistent
+  ansible.builtin.package:
+    name: iptables-persistent
+    state: present
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Configure DNAT rules for forwarded ports
+  ansible.builtin.iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: "{{ ansible_facts['default_ipv4']['interface'] }}"
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: DNAT
+    to_destination: "{{ k8s_tailscale_ip }}"
+  loop: "{{ forwarded_ports }}"
+  notify: Save iptables rules
+
+- name: Allow forwarded traffic
+  ansible.builtin.iptables:
+    chain: FORWARD
+    protocol: tcp
+    destination_port: "{{ item }}"
+    destination: "{{ k8s_tailscale_ip }}"
+    jump: ACCEPT
+  loop: "{{ forwarded_ports }}"
+  notify: Save iptables rules
+
+- name: Allow return traffic for established connections
+  ansible.builtin.iptables:
+    chain: FORWARD
+    ctstate:
+      - ESTABLISHED
+      - RELATED
+    jump: ACCEPT
+  notify: Save iptables rules
+
+- name: MASQUERADE outgoing traffic to Tailscale network
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    destination: "{{ k8s_tailscale_ip }}"
+    jump: MASQUERADE
+  notify: Save iptables rules

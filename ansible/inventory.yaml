@@ -1,0 +1,8 @@
+all:
+  children:
+    gateway:
+      hosts:
+        homelab-gateway:
+          ansible_host: 217.142.228.246
+          ansible_user: ubuntu
+          ansible_python_interpreter: /usr/bin/python3.12

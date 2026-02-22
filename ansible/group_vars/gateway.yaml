@@ -1,0 +1,4 @@
+k8s_tailscale_ip: "100.101.48.12"
+
+forwarded_ports:
+  - 25565 # Minecraft (mc-router)
