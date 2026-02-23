@@ -86,7 +86,8 @@ spec:
     persistence:
       dataDir:
         enabled: true
-        existingClaim: gtnh-data
+        storageClass: local-path
+        Size: 50Gi
     startupProbe:
       enabled: true
       command:
