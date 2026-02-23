@@ -28,6 +28,8 @@ spec:
     extraEnv:
       CF_SLUG: "ftb-stoneblock-4"
       OVERRIDE_SERVER_PROPERTIES: "TRUE"
+      WHITELIST: "tassy612,Sotatsu"
+      ENABLE_WHITELIST: "TRUE"
     resources:
       requests:
         memory: 10Gi
