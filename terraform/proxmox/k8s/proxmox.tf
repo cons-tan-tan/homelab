@@ -58,6 +58,17 @@ resource "proxmox_virtual_environment_vm" "talos" {
     file_format  = "raw"
   }
 
+  # データディスク（local-path-provisioner 用）
+  dynamic "disk" {
+    for_each = try(each.value.data_disk_size, null) != null ? [each.value.data_disk_size] : []
+    content {
+      interface    = "scsi1"
+      datastore_id = local.node_list[each.value.node_name].datastore_id
+      size         = disk.value
+      file_format  = "raw"
+    }
+  }
+
   network_device {
     model  = "virtio"
     bridge = "vmbr0"

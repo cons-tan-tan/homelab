@@ -10,7 +10,7 @@ data "talos_machine_configuration" "nodes" {
   machine_type     = each.value.type
   machine_secrets  = talos_machine_secrets.this.machine_secrets
 
-  config_patches = [
+  config_patches = concat([
     yamlencode({
       machine = {
         network = {
@@ -53,7 +53,29 @@ data "talos_machine_configuration" "nodes" {
       hostname   = each.key
       auto       = "off"
     })
-  ]
+    ],
+    # データディスクのマウント設定（data_disk_size が定義されたノードのみ）
+    try(each.value.data_disk_size, null) != null ? [
+      yamlencode({
+        machine = {
+          disks = [{
+            device = "/dev/sdb"
+            partitions = [{
+              mountpoint = "/var/mnt/local-storage"
+            }]
+          }]
+          kubelet = {
+            extraMounts = [{
+              destination = "/var/mnt/local-storage"
+              type        = "bind"
+              source      = "/var/mnt/local-storage"
+              options     = ["bind", "rshared", "rw"]
+            }]
+          }
+        }
+      })
+    ] : []
+  )
 }
 
 # 各ノードに設定を適用（Talos API経由）

@@ -35,13 +35,14 @@ locals {
       type      = "controlplane"
     }
     "k8s-wk-02" = {
-      node_name = local.node_list.pve02.name
-      vm_id     = 2101
-      cpu_cores = 10
-      memory    = 73728 # 72GB
-      disk_size = 200
-      ip        = "192.168.2.22"
-      type      = "worker"
+      node_name      = local.node_list.pve02.name
+      vm_id          = 2101
+      cpu_cores      = 10
+      memory         = 73728 # 72GB
+      disk_size      = 200
+      data_disk_size = 100
+      ip             = "192.168.2.22"
+      type           = "worker"
     }
     "k8s-wk-01" = {
       node_name = local.node_list.pve01.name
