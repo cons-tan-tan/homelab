@@ -27,6 +27,7 @@ spec:
         enabled: true
     extraEnv:
       CF_SLUG: "ftb-stoneblock-4"
+      OVERRIDE_SERVER_PROPERTIES: "TRUE"
     resources:
       requests:
         memory: 10Gi
