@@ -10,5 +10,9 @@ spec:
     name: homelab
   path: ./apps/homelab
   prune: true
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   dependsOn:
     - name: infrastructure-configs
