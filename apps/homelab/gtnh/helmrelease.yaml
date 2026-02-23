@@ -84,9 +84,9 @@ spec:
       limits:
         memory: 24Gi
     persistence:
+      storageClass: local-path
       dataDir:
         enabled: true
-        storageClass: local-path
         Size: 50Gi
     startupProbe:
       enabled: true
