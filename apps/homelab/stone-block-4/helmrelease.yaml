@@ -1,0 +1,56 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: stone-block-4
+  namespace: minecraft
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: minecraft
+      sourceRef:
+        kind: HelmRepository
+        name: itzg-minecraft
+        namespace: flux-system
+  values:
+    image:
+      tag: java21
+    serviceAnnotations:
+      mc-router.itzg.me/externalServerName: "sb4.constantan.dev"
+      external-dns.alpha.kubernetes.io/hostname: "sb4.i.constantan.dev"
+    minecraftServer:
+      eula: "TRUE"
+      type: "AUTO_CURSEFORGE"
+      memory: "8G"
+      serviceType: LoadBalancer
+      rcon:
+        enabled: true
+    extraEnv:
+      CF_SLUG: "ftb-stoneblock-4"
+    resources:
+      requests:
+        memory: 10Gi
+        cpu: "2"
+      limits:
+        memory: 12Gi
+    persistence:
+      storageClass: local-path
+      dataDir:
+        enabled: true
+        Size: 50Gi
+    startupProbe:
+      enabled: true
+      command:
+        - mc-health
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      failureThreshold: 60
+    podSecurityContext:
+      fsGroupChangePolicy: OnRootMismatch
+    nodeSelector:
+      kubernetes.io/hostname: k8s-wk-02
+  valuesFrom:
+    - kind: Secret
+      name: curseforge-api-key
+      valuesKey: api-key
+      targetPath: extraEnv.CF_API_KEY
