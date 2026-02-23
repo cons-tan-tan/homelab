@@ -9,5 +9,6 @@ locals {
   # internal: managed by external-dns via mc-router Service annotation
   minecraft_servers = {
     gtnh = {}
+    sb4  = {}
   }
 }
