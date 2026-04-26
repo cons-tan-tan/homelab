@@ -1,4 +1,6 @@
 creation_rules:
+  - path_regex: terraform/.*/secrets\.enc\.yaml$
+    age: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
   - path_regex: .*.yaml
     encrypted_regex: ^(data|stringData)$
     age: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
