@@ -32,6 +32,7 @@
               pkgs.google-cloud-sdk
               pkgs.oci-cli
               pkgs.kubectl
+              pkgs.kubelogin-oidc
               pkgs.kubernetes-helm
               pkgs.talosctl
               pkgs.fluxcd
