@@ -7,3 +7,7 @@ output "kubeconfig" {
   value     = talos_cluster_kubeconfig.this.kubeconfig_raw
   sensitive = true
 }
+
+output "kubeconfig_oidc" {
+  value = local.kubeconfig_oidc
+}
