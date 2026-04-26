@@ -74,6 +74,21 @@ data "talos_machine_configuration" "nodes" {
           }
         }
       })
+    ] : [],
+    # OIDC 認証設定（controlplane のみ）
+    each.value.type == "controlplane" ? [
+      yamlencode({
+        cluster = {
+          apiServer = {
+            extraArgs = {
+              "oidc-issuer-url"     = local.oidc.issuer_url
+              "oidc-client-id"      = local.oidc.client_id
+              "oidc-username-claim" = "email"
+              "oidc-groups-claim"   = "groups"
+            }
+          }
+        }
+      })
     ] : []
   )
 }

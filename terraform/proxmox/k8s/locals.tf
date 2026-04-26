@@ -11,6 +11,14 @@ locals {
     endpoint = "https://192.168.2.12:6443"
   }
 
+  # OIDC settings (managed in terraform/cloudflare/)
+  # client_id is a public identifier per OAuth 2.0; safe to commit.
+  # Cloudflare Access for SaaS uses a per-app issuer path under /cdn-cgi/access/sso/oidc/{client_id}.
+  oidc = {
+    client_id  = "bc93fce5cbc6849f90972675c2279f70110d54b48eea203136686eb16e665d75"
+    issuer_url = "https://constantan.cloudflareaccess.com/cdn-cgi/access/sso/oidc/bc93fce5cbc6849f90972675c2279f70110d54b48eea203136686eb16e665d75"
+  }
+
   node_list = {
     "pve01" = {
       name         = "pve01"
