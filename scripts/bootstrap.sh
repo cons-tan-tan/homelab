@@ -18,9 +18,9 @@ echo "Waiting for Kubernetes API server..."
 timeout 300 bash -c 'until kubectl get --raw /readyz &>/dev/null; do sleep 5; done'
 
 # 4. Cilium CNI インストール（values は Flux HelmRelease から抽出）
-CILIUM_VERSION=$(yq '.spec.chart.spec.version' "${REPO_ROOT}/infrastructure/controllers/cilium.yaml")
+CILIUM_VERSION=$(yq '.spec.chart.spec.version' "${REPO_ROOT}/kubernetes/apps/kube-system/cilium/helmrelease.yaml")
 helm repo add cilium https://helm.cilium.io/ --force-update
-yq '.spec.values' "${REPO_ROOT}/infrastructure/controllers/cilium.yaml" | \
+yq '.spec.values' "${REPO_ROOT}/kubernetes/apps/kube-system/cilium/helmrelease.yaml" | \
   helm install cilium cilium/cilium \
     --version "${CILIUM_VERSION}" \
     --namespace kube-system \
@@ -39,4 +39,4 @@ kubectl create secret generic sops-age \
   --from-file=age.agekey="${REPO_ROOT}/keys.txt"
 
 # 7. Flux 同期設定を適用
-kubectl apply -f "${REPO_ROOT}/clusters/homelab/gotk-sync.yaml"
+kubectl apply -f "${REPO_ROOT}/kubernetes/flux/cluster/gotk-sync.yaml"
