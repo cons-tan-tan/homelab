@@ -1,0 +1,83 @@
+---
+- name: Validate amdgpu PCI address when amdgpu power profile is enabled
+  when:
+    - proxmox_power_profile_enabled | bool
+    - proxmox_power_profile_amdgpu_enabled | bool
+  ansible.builtin.assert:
+    that:
+      - proxmox_power_profile_amdgpu_pci_address | length > 0
+    fail_msg: >-
+      proxmox_power_profile_amdgpu_pci_address must be set when
+      proxmox_power_profile_amdgpu_enabled is true.
+
+- name: Disable Proxmox power profile when configured off
+  when: not (proxmox_power_profile_enabled | bool)
+  block:
+    - name: Check existing Proxmox power profile systemd service
+      ansible.builtin.stat:
+        path: "{{ proxmox_power_profile_unit_path }}"
+      register: proxmox_power_profile_unit
+
+    - name: Stop and disable existing Proxmox power profile service
+      when: proxmox_power_profile_unit.stat.exists
+      ansible.builtin.systemd:
+        name: "{{ proxmox_power_profile_service_name }}.service"
+        enabled: false
+        state: stopped
+        daemon_reload: true
+
+    - name: Remove Proxmox power profile systemd service when disabled
+      when: proxmox_power_profile_remove_when_disabled | bool
+      ansible.builtin.file:
+        path: "{{ proxmox_power_profile_unit_path }}"
+        state: absent
+      notify: Reload systemd daemon
+
+    - name: Remove Proxmox power profile script when disabled
+      when: proxmox_power_profile_remove_when_disabled | bool
+      ansible.builtin.file:
+        path: "{{ proxmox_power_profile_install_path }}"
+        state: absent
+
+- name: Configure Proxmox power profile when enabled
+  when: proxmox_power_profile_enabled | bool
+  block:
+    - name: Ensure local sbin directory exists
+      ansible.builtin.file:
+        path: "{{ proxmox_power_profile_install_path | dirname }}"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy Proxmox power profile script
+      ansible.builtin.template:
+        src: pve-power-profile.sh.j2
+        dest: "{{ proxmox_power_profile_install_path }}"
+        owner: root
+        group: root
+        mode: "0755"
+      notify: Restart Proxmox power profile service
+
+    - name: Deploy Proxmox power profile systemd service
+      ansible.builtin.template:
+        src: pve-power-profile.service.j2
+        dest: "{{ proxmox_power_profile_unit_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Proxmox power profile service
+
+    - name: Report Proxmox power profile service enable/start in check mode
+      when: ansible_check_mode
+      ansible.builtin.debug:
+        msg: >-
+          Would enable and start {{ proxmox_power_profile_service_name }}.service.
+          Skipping systemd in check mode because the unit may not exist yet.
+      changed_when: true
+
+    - name: Enable and start Proxmox power profile service
+      when: not ansible_check_mode
+      ansible.builtin.systemd:
+        name: "{{ proxmox_power_profile_service_name }}.service"
+        enabled: true
+        state: started
+        daemon_reload: true

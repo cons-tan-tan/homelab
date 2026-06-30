@@ -3,3 +3,8 @@
   roles:
     - tailscale
     - gateway
+
+- hosts: proxmox
+  become: false
+  roles:
+    - proxmox_power_profile

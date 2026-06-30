@@ -1,0 +1,18 @@
+---
+# pve01: HCAR5000-MI / Ryzen 7 5800U のファン騒音対策。
+# 背景: docs/ops/2026-07-01-pve01-fan-noise/README.md
+proxmox_power_profile_enabled: true
+
+proxmox_power_profile_cpu_governor: powersave
+proxmox_power_profile_cpu_epp_enabled: true
+proxmox_power_profile_cpu_epp: balance_power
+proxmox_power_profile_cpu_epp_fallbacks:
+  - power
+  - balance_performance
+  - default
+  - performance
+
+proxmox_power_profile_amdgpu_enabled: true
+proxmox_power_profile_amdgpu_pci_address: "0000:05:00.0"
+proxmox_power_profile_amdgpu_force_performance_level: auto
+proxmox_power_profile_amdgpu_dpm_state: balanced

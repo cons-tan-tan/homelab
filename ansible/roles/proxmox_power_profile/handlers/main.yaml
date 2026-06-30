@@ -1,0 +1,14 @@
+---
+- name: Reload systemd daemon
+  when: not ansible_check_mode
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart Proxmox power profile service
+  when:
+    - proxmox_power_profile_enabled | bool
+    - not ansible_check_mode
+  ansible.builtin.systemd:
+    name: "{{ proxmox_power_profile_service_name }}.service"
+    state: restarted
+    daemon_reload: true

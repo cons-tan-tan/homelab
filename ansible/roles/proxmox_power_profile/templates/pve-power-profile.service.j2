@@ -1,0 +1,15 @@
+# Managed by Ansible: roles/proxmox_power_profile
+
+[Unit]
+Description=Apply Proxmox host power profile
+Documentation=https://github.com/cons-tan-tan/homelab/tree/main/docs/ops/2026-07-01-pve01-fan-noise
+After=systemd-modules-load.service local-fs.target
+Before=pve-guests.service
+
+[Service]
+Type=oneshot
+ExecStart={{ proxmox_power_profile_install_path }}
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
