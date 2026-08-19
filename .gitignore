@@ -10,3 +10,6 @@
 .talosconfig
 
 keys.txt
+
+# Nix build output
+/result

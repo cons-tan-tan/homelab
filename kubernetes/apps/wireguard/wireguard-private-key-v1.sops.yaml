@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: wireguard-private-key-v1
+    namespace: wireguard
+stringData:
+    private-key: ENC[AES256_GCM,data:zXLV5uXq58baEsktQuh9uKBfF2cWOQpatRJuJk5DK0tNZpyvI6JsPzQ2Jhg=,iv:UEv8OysajgmK0nyC83u8L/SnOOIqRuP2lXSDWER9zcI=,tag:EXOf/tl/ST2cn0f+U0a6NA==,type:str]
+immutable: true
+type: Opaque
+sops:
+    age:
+        - recipient: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB3SG50enZnS2tjRDZYallH
+            NUFNeGdvcWo3elFqeTNiaUwzMWFORWNPTDFNCkJWZVc0NERWNXFPL3AxK2Rudzls
+            aHUwM0kreURQRnVCS1YyRFdKQmRWN1EKLS0tIHZ5UThCTUhpSGdzT3psUURDVXdY
+            V2xJRnpvWHR4K1hFdjMyUHVjNEhMQncK38XhwRvLkCaeDYsTeH9RLBGJ5a2wqIib
+            WSYlxzFK4zDbKkAe7lTD1gDrdxKhW/LK717J/WeF6YvXkHcsZ8xXUg==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-08-19T14:33:52Z"
+    mac: ENC[AES256_GCM,data:e79qZrbmNWVFSpi+uDoWETQbPOIOsGcuYKc7669ugytOLN5UyTrA+N05hDs1N/2D3MraIURIIEem4UWF8Wmg6v3nk+AUqSzcBcGJwujwwI98I9QqT9h0dOjtOcWkre99tcuJokLIQWf0oxRX2UvRtMKbIGUaIHKh6MBBZ5wIUxM=,iv:NtpXCJ/UV08ln1Hvs0I/gSJIwGOuo03UpTAh7YDNMt4=,tag:FU3xnGKZ53LWAyVWaha3PA==,type:str]
+    pgp:
+        - created_at: "2026-08-19T13:25:18Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hF4DD5j8IMh4Q5oSAQdAIMJDZJ//cnDmbDo+QOBgF4Jy5trH+W4XtS1Qp8TfkCEw
+            /AanI2/JxaEMqVkKkkoKZVcQUQZb7beXM9mwrVyI1YTyoq826G7TGirCz7aAnCT4
+            0l4BKyZyskS8DC0XRVDygNxKskIS3Vvqtyov0D+Hsmr1QPLqx4xdi8PfQe/qBTsZ
+            sa7bG9bJCDsJoTsdtCGrP3uVlZ28XghHx0MEIbzQ+L+KUVzw4Lmy24HZt+gF6+TF
+            =XZMU
+            -----END PGP MESSAGE-----
+          fp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
+    encrypted_regex: ^(data|stringData)$
+    version: 3.13.3

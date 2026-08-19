@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wireguard-gateway
+  namespace: wireguard
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wireguard-gateway
+  template:
+    metadata:
+      labels:
+        app: wireguard-gateway
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 10
+      initContainers:
+        - name: wireguard-config
+          image: busybox:1.37.0@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -ec
+          args:
+            - |
+              umask 077
+              test "$(grep -c '^PrivateKey = @PRIVATE_KEY@$' /template/wg0.conf)" -eq 1
+              tr -d '\r\n' < /secret/private-key | grep -Eq '^[A-Za-z0-9+/]{43}=$'
+              mkdir -p /config/wg_confs
+              chmod 0700 /config/wg_confs
+              while IFS= read -r line || [ -n "$line" ]; do
+                if [ "$line" = "PrivateKey = @PRIVATE_KEY@" ]; then
+                  printf 'PrivateKey = '
+                  tr -d '\r\n' < /secret/private-key
+                  printf '\n'
+                else
+                  printf '%s\n' "$line"
+                fi
+              done < /template/wg0.conf > /config/wg_confs/wg0.conf
+              chmod 0600 /config/wg_confs/wg0.conf
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: wireguard-runtime
+              mountPath: /config
+            - name: wireguard-private-key
+              mountPath: /secret
+              readOnly: true
+            - name: wireguard-config-template
+              mountPath: /template
+              readOnly: true
+      containers:
+        - name: wireguard
+          image: lscr.io/linuxserver/wireguard:1.0.20260223-r0-ls120@sha256:3abfd4b82212106e357989750b9c0c9859aa511f5305a9a55c18c8de7198b655
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: Etc/UTC
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+                - NET_ADMIN
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            exec:
+              command:
+                - wg
+                - show
+                - wg0
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            exec:
+              command:
+                - wg
+                - show
+                - wg0
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - wg
+                - show
+                - wg0
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: wireguard-runtime
+              mountPath: /config
+        - name: minecraft-proxy
+          image: haproxy:3.2-alpine@sha256:79799e8b2977e60802774fa53d29e6b54e045402cdd8a8b9fe43923e7095a047
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: minecraft
+              containerPort: 25565
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 99
+            runAsGroup: 99
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: minecraft-proxy-config
+              mountPath: /usr/local/etc/haproxy/haproxy.cfg
+              subPath: haproxy.cfg
+              readOnly: true
+      volumes:
+        - name: wireguard-runtime
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Mi
+        - name: wireguard-private-key
+          secret:
+            # Rotate by creating v2 and updating this reference; Flux prunes v1.
+            secretName: wireguard-private-key-v1
+            defaultMode: 0400
+        - name: wireguard-config-template
+          configMap:
+            name: wireguard-config-template
+        - name: minecraft-proxy-config
+          configMap:
+            name: minecraft-proxy

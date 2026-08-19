@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - wireguard-private-key-v1.sops.yaml
+  - deployment.yaml
+configMapGenerator:
+  - name: wireguard-config-template
+    namespace: wireguard
+    files:
+      - wg0.conf
+  - name: minecraft-proxy
+    namespace: wireguard
+    files:
+      - haproxy.cfg
