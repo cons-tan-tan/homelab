@@ -1,16 +1,14 @@
-# Debian 12 (Bookworm) cloud image
-resource "proxmox_virtual_environment_download_file" "debian_cloud_image" {
-  node_name    = local.vm.node_name
-  datastore_id = local.node_list[local.vm.node_name].datastore_id
-  content_type = "iso"
-  url          = "https://cloud.debian.org/images/cloud/bookworm/20260129-2372/debian-12-generic-amd64-20260129-2372.qcow2"
-  file_name    = "debian-12-generic-amd64.img"
-}
-
 resource "proxmox_virtual_environment_vm" "nfs" {
-  name      = local.vm.name
-  node_name = local.vm.node_name
-  vm_id     = local.vm.vm_id
+  name       = local.vm.name
+  node_name  = local.vm.node_name
+  vm_id      = local.vm.vm_id
+  boot_order = ["scsi0", "net0"]
+  on_boot    = true
+  protection = true
+  started    = true
+
+  delete_unreferenced_disks_on_destroy = false
+  stop_on_destroy                      = true
 
   agent {
     enabled = true
@@ -25,14 +23,21 @@ resource "proxmox_virtual_environment_vm" "nfs" {
     dedicated = local.vm.memory
   }
 
+  operating_system {
+    type = "l26"
+  }
+
   scsi_hardware = "virtio-scsi-pci"
 
+  serial_device {}
+
   disk {
-    datastore_id = local.node_list[local.vm.node_name].datastore_id
-    file_id      = proxmox_virtual_environment_download_file.debian_cloud_image.id
-    interface    = "scsi0"
-    size         = local.vm.disk_size
-    file_format  = "raw"
+    datastore_id      = local.node_list[local.vm.node_name].datastore_id
+    discard           = "on"
+    file_format       = "raw"
+    interface         = "scsi0"
+    path_in_datastore = "${local.vm.vm_id}/vm-${local.vm.vm_id}-disk-1.raw"
+    size              = local.vm.disk_size
   }
 
   network_device {
@@ -40,25 +45,7 @@ resource "proxmox_virtual_environment_vm" "nfs" {
     bridge = "vmbr0"
   }
 
-  initialization {
-    datastore_id = local.node_list[local.vm.node_name].datastore_id
-    user_account {
-      keys     = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKm+q7Q7YZOPoBRbEzJ7wIYKkUFrhmpIYk4PMn/obPnq openpgp:0xDA49D92C"]
-      username = "constantan"
-    }
-    ip_config {
-      ipv4 {
-        address = "${local.vm.ip}/${local.proxmox.subnet_mask}"
-        gateway = local.proxmox.gateway
-      }
-    }
-    dns {
-      domain  = local.proxmox.dns_domain
-      servers = local.proxmox.dns_servers
-    }
-  }
-
   lifecycle {
-    ignore_changes = [disk[0].file_id]
+    prevent_destroy = true
   }
 }
