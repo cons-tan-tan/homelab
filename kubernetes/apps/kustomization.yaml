@@ -7,5 +7,4 @@ resources:
   - kube-system
   - minecraft
   - ntfy
-  - tailscale
   - wireguard
