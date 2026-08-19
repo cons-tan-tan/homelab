@@ -3,10 +3,8 @@ kind: Service
 metadata:
   name: mc-router
   namespace: minecraft
-  annotations:
-    tailscale.com/expose: "true"
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: mc-router
   ports:
