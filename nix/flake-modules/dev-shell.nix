@@ -20,6 +20,7 @@
           pkgs.kubectl
           pkgs.kubelogin-oidc
           pkgs.kubernetes-helm
+          pkgs.mcstatus
           pkgs.talosctl
           pkgs.fluxcd
           # Keep Ansible dependencies out of the main Python environment.
