@@ -12,13 +12,25 @@ sops:
         - recipient: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBRQ0YyV1BmRTJBZGplRXNJ
-            MURWelpLYlJJZHRiQTFaNDdoU1Jxc1RIYlVZCkNoL0VzbnhQQXpPWXpKbWNETllG
-            ODdoaWF5NWF6ZkpVeFlNbVRjVnUySFkKLS0tIC9jbkI4Mk5oY01yeFhhVFUva0RP
-            ZDFDVXNHMVBqREcra0JTKzVhanpvek0KNWBJCXupDHk+GX1ZBEf8bsh7obS+5dPN
-            XsePRMVFSSjGnsJgmfFQ8VxYHT/MtMXPaNF9GpDKJ01WKn7vKD3a8g==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBMejhheGJUeWc2dXRKamlP
+            TngrelFxM3lGeDdsMUE0Qnl0dlhKSkhRUVVRCjU4VUhzUWNBZGYwWG11Z2RJK3pv
+            WnF4MUZCWWVmR2ljTFh1SnUyT1RWUzAKLS0tIHJaZkpRR3l1eHM2c0pYaTZUUm1B
+            WEEwaENXU3VHQXdxajVXdUFlY2FWdU0Kl5Q/jP6DQ8Z1m+nEq0EfKNuLSE8cWoZr
+            VFGFzv66axTFgM94ldaSocrJWpFwp4zaSD+sC6Q+D931K6tjOX/Obg==
             -----END AGE ENCRYPTED FILE-----
     lastmodified: "2026-02-21T11:15:49Z"
     mac: ENC[AES256_GCM,data:QWYuTfExiP6DMkTLSqUc0/PkBJt9wrUTmvp7GiRZk55OkUvIIjLndEJs531edKUH00VWHHnjsYentYKzBzZneaHkAeprsPTE6j2Jy9dSpfAjqHTJ2XbOJvDaCmdARei9rWkDc2c8Y/Dw54+RxrazsmXplNCpw7IDloS7aDZ7Eyc=,iv:Oi7ttshCwmRxy/4aDeBgphYb2kAJuK+xNixG5jlQonE=,tag:T8psl/J3vRM9W36aRqzRqw==,type:str]
+    pgp:
+        - created_at: "2026-08-19T13:55:11Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hF4DD5j8IMh4Q5oSAQdAp+VBjRJRKYfI88UvmEsGvfrmADTVWcIqFhrWuE/YkgYw
+            5H2uGRCvGTHc3AaJrBB55/b9Y7de6hBv6BD5AVi2bfFp5N41RieqNGFaentrqlXA
+            0l4B28JUrL2ocrWMDKnugDIX4v3ATGMbEiT7t1mbd+UwM7/NpBygjVMSk4HYbhtr
+            Brxq5vdJGnV0/h9j9gERtuYhNRBPj/31nl5D1K57djnUGMur7LgdqegK+6QEUF1d
+            =XL7d
+            -----END PGP MESSAGE-----
+          fp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
     encrypted_regex: ^(data|stringData)$
     version: 3.11.0

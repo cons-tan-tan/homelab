@@ -1,6 +1,10 @@
 creation_rules:
-  - path_regex: terraform/.*/secrets\.enc\.yaml$
-    age: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
-  - path_regex: .*.yaml
+  - path_regex: nix/secrets/homelab-gateway\.sops\.yaml$
+    pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
+    age: age18mx92p0c2rq7hy77pxsu49uwux5k6542htcu5szjlsp5znhkwspq9gkxah
+  - path_regex: kubernetes/.*\.sops\.yaml$
     encrypted_regex: ^(data|stringData)$
+    pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
+    age: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
+  - path_regex: terraform/.*/secrets\.sops\.yaml$
     age: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3

@@ -4,4 +4,4 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - helmrelease.yaml
-  - cloudflare-api-token.yaml
+  - cloudflare-api-token.sops.yaml
