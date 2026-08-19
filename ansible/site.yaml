@@ -1,9 +1,3 @@
-- hosts: gateway
-  become: true
-  roles:
-    - tailscale
-    - gateway
-
 - hosts: proxmox
   become: false
   roles:
