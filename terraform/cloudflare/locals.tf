@@ -1,11 +1,11 @@
 locals {
   domain = "constantan.dev"
 
-  # VPS (OCI homelab-gateway)
-  vps_ip = "217.142.228.246"
+  # Public Minecraft gateway (Linode homelab-gateway)
+  minecraft_gateway_ip = "172.235.215.105"
 
   # Game server DNS records
-  # external: VPS IP (public access via VPS gateway)
+  # external: gateway IP (public access via Linode gateway)
   # internal: managed by external-dns via mc-router Service annotation
   minecraft_servers = {
     gtnh = {}
