@@ -19,6 +19,9 @@ spec:
       eula: "TRUE"
       type: "GTNH"
       memory: "16G"
+      difficulty: default
+      levelType: default
+      motd: default
       serviceType: LoadBalancer
       rcon:
         enabled: true
