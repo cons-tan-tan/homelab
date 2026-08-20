@@ -24,6 +24,9 @@ spec:
         enabled: true
     extraEnv:
       GTNH_PACK_VERSION: "2.8.4"
+      ENABLE_WHITELIST: "TRUE"
+      WHITELIST: "Sotatsu,tassy612"
+      EXISTING_WHITELIST_FILE: "SYNCHRONIZE"
     resources:
       requests:
         memory: 18Gi
