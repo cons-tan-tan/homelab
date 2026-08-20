@@ -1,0 +1,60 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gtnh
+  namespace: minecraft
+spec:
+  values:
+    extraEnv:
+      JVM_OPTS: "@/runtime-config/jvm.options"
+      SKIP_GTNH_UPDATE_CHECK: "true"
+    initContainers:
+      - name: setup-gtnh
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        env:
+          - name: EULA
+            value: "{{ .Values.minecraftServer.eula }}"
+          - name: TYPE
+            value: "{{ .Values.minecraftServer.type }}"
+          - name: GTNH_PACK_VERSION
+            value: "{{ .Values.extraEnv.GTNH_PACK_VERSION }}"
+          - name: SETUP_ONLY
+            value: "true"
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+          - name: datadir
+            mountPath: /data
+      - name: merge-forge-cfg
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        command:
+          - /bin/sh
+          - /runtime-config/merge-forge-cfg.sh
+          - /data/serverutilities/serverutilities.cfg
+          - /runtime-config/serverutilities.patch.cfg
+        volumeMounts:
+          - name: datadir
+            mountPath: /data
+          - name: runtime-config
+            mountPath: /runtime-config
+            readOnly: true
+    extraVolumes:
+      - volumeMounts:
+          - name: runtime-config
+            mountPath: /runtime-config
+            readOnly: true
+        volumes:
+          - name: runtime-config
+            configMap:
+              name: gtnh-runtime-config
+    startupProbe:
+      command:
+        - /bin/sh
+        - -ec
+        - >-
+          mc-health &&
+          /bin/sh /runtime-config/merge-forge-cfg.sh --check
+          /data/serverutilities/serverutilities.cfg
+          /runtime-config/serverutilities.patch.cfg

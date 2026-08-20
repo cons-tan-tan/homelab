@@ -1,0 +1,73 @@
+# JVM tuning for GTNH with a 16 GiB heap.
+#
+# References:
+# - Aikar's Flags: https://docs.papermc.io/paper/aikars-flags
+# - GTNH Wiki: https://gtnh.miraheze.org/wiki/Low_End_PCs#JVM_Arguments
+
+# --- Pre-existing options ---
+
+# Automatically confirms the FML startup prompt.
+-Dfml.queryResult=confirm
+
+# Enables compact object headers (experimental on JDK 24, product option on JDK 25+).
+-XX:+UseCompactObjectHeaders
+
+# --- Aikar's Flags (unchanged) ---
+
+# Enables the experimental JVM options used below.
+-XX:+UnlockExperimentalVMOptions
+
+# Ignores System.gc() calls made by mods.
+-XX:+DisableExplicitGC
+
+# Processes reference objects in parallel to reduce GC pauses.
+-XX:+ParallelRefProcEnabled
+
+# Commits all heap memory pages during startup.
+-XX:+AlwaysPreTouch
+
+# Disables the JVM performance data shared-memory file to avoid disk I/O stalls.
+-XX:+PerfDisableSharedMem
+
+# Sets the minimum young-generation size to 30% of the heap.
+-XX:G1NewSizePercent=30
+
+# Sets the maximum young-generation size to 40% of the heap.
+-XX:G1MaxNewSizePercent=40
+
+# Uses 8 MiB G1 regions.
+-XX:G1HeapRegionSize=8M
+
+# Reserves 20% of the heap to reduce evacuation failures.
+-XX:G1ReservePercent=20
+
+# Allows up to 5% reclaimable heap space before triggering another mixed GC.
+-XX:G1HeapWastePercent=5
+
+# Spreads mixed collection work across four GC cycles.
+-XX:G1MixedGCCountTarget=4
+
+# Starts concurrent marking when heap occupancy reaches 15%.
+-XX:InitiatingHeapOccupancyPercent=15
+
+# Excludes regions with more than 90% live objects from mixed collections.
+-XX:G1MixedGCLiveThresholdPercent=90
+
+# Limits remembered-set update work to 5% of the pause-time target.
+-XX:G1RSetUpdatingPauseTimePercent=5
+
+# Sets the Eden-to-Survivor space ratio to 32:1.
+-XX:SurvivorRatio=32
+
+# Promotes objects after one surviving young collection.
+-XX:MaxTenuringThreshold=1
+
+# --- GTNH Wiki only ---
+
+# Effectively disables RMI-triggered full GC by extending its interval.
+-Dsun.rmi.dgc.server.gcInterval=2147483646
+
+# --- Tuned value (Aikar: 200 ms, GTNH Wiki: 80 ms) ---
+
+# Uses a 130 ms GC pause-time target as a midpoint for this server.
+-XX:MaxGCPauseMillis=130
