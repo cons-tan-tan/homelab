@@ -3,6 +3,10 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+: "${KUBERNETES_SOPS_AGE_KEY:?Run this script with secretspec run --scope bootstrap}"
+kubernetes_sops_age_key="${KUBERNETES_SOPS_AGE_KEY}"
+unset KUBERNETES_SOPS_AGE_KEY
+
 # 1. Proxmox/Talos クラスタ構築
 terraform -chdir="${REPO_ROOT}/terraform/proxmox/k8s" init
 terraform -chdir="${REPO_ROOT}/terraform/proxmox/k8s" apply -auto-approve
@@ -34,9 +38,14 @@ helm install flux2 oci://ghcr.io/fluxcd-community/charts/flux2 \
   --wait
 
 # 6. SOPS 復号用の age 鍵を Flux に登録
-kubectl create secret generic sops-age \
-  --namespace=flux-system \
-  --from-file=age.agekey="${REPO_ROOT}/keys.txt"
+printf '%s\n' "${kubernetes_sops_age_key}" | \
+  kubectl create secret generic sops-age \
+    --namespace=flux-system \
+    --from-file=age.agekey=/dev/stdin \
+    --dry-run=client \
+    --output=yaml | \
+  kubectl apply -f -
+unset kubernetes_sops_age_key
 
 # 7. Flux 同期設定を適用
 kubectl apply -f "${REPO_ROOT}/kubernetes/flux/cluster/gotk-sync.yaml"

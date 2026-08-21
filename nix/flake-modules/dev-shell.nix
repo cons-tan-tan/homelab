@@ -25,6 +25,7 @@
           # Keep Ansible dependencies out of the main Python environment.
           (pkgs.python3.withPackages (ps: [ ps.ansible-core ]))
           pkgs.sops
+          pkgs.secretspec
           pkgs.age
           pkgs.ssh-to-age
           pkgs.wireguard-tools
@@ -33,6 +34,20 @@
         ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
           pkgs.proxmox-auto-install-assistant
         ];
+
+        CLOUDSDK_ACTIVE_CONFIG_NAME = "personal";
+
+        shellHook = ''
+          repo_root="$(git rev-parse --show-toplevel)"
+          export KUBECONFIG="$repo_root/.kubeconfig"
+          export TALOSCONFIG="$repo_root/.talosconfig"
+          unset repo_root
+
+          if secretspec_exports="$(${pkgs.lib.getExe pkgs.secretspec} export --reason "Load homelab development environment" --profile default --scope dev-shell)"; then
+            eval "$secretspec_exports"
+          fi
+          unset secretspec_exports
+        '';
       };
 
       formatter = pkgs.nixfmt;
