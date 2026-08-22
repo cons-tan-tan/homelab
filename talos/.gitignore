@@ -1,0 +1,7 @@
+# Talhelper runtime files and unencrypted secret inputs.
+# Regenerating talsecret.sops.yaml also requires refreshing the CA in
+# .kubeconfig and the public keys in terraform/gcp/kubernetes-jwks.json.
+.clusterconfig.lock
+talsecret*.yaml
+talsecret*.yml
+!talsecret.sops.yaml

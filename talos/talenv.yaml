@@ -1,0 +1,4 @@
+---
+# Public OIDC client settings shared by Talos and the committed kubectl config.
+OIDC_ISSUER_URL: https://constantan.cloudflareaccess.com/cdn-cgi/access/sso/oidc/bc93fce5cbc6849f90972675c2279f70110d54b48eea203136686eb16e665d75
+OIDC_CLIENT_ID: bc93fce5cbc6849f90972675c2279f70110d54b48eea203136686eb16e665d75

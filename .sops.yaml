@@ -11,5 +11,8 @@ creation_rules:
     age: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
   - path_regex: terraform/.*/secrets\.sops\.yaml$
     pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
+  - path_regex: ^talos/talsecret\.sops\.yaml$
+    # Personal GPG key. Talos cluster secrets must not depend on the in-cluster age key.
+    pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
   - path_regex: ^secrets/secretspec\.sops\.yaml$
     pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE

@@ -7,9 +7,5 @@
 
 # End of https://www.toptal.com/developers/gitignore/api/direnv
 
-.talosconfig
-
-keys.txt
-
 # Nix build output
 /result

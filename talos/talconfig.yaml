@@ -1,0 +1,126 @@
+---
+clusterName: homelab
+talosVersion: v1.12.2
+kubernetesVersion: v1.35.0
+endpoint: https://192.168.2.12:6443
+
+imageFactory:
+  # Talhelper 3.1 defaults to a metal-installer path, while the official
+  # registry exposes the secure-boot installer at installer-secureboot.
+  installerURLTmpl: "{{.RegistryURL}}/installer{{if .Secureboot}}-secureboot{{end}}/{{.ID}}:{{.Version}}"
+
+cniConfig:
+  name: none
+
+patches:
+  - |-
+    cluster:
+      proxy:
+        disabled: true
+
+controlPlane:
+  schematic: &talosSchematic
+    customization:
+      systemExtensions:
+        officialExtensions:
+          - siderolabs/qemu-guest-agent
+  imageSchematic: *talosSchematic
+  filenameTmpl: "{{.Hostname}}.yaml"
+  patches:
+    - |-
+      cluster:
+        apiServer:
+          extraArgs:
+            oidc-issuer-url: ${OIDC_ISSUER_URL}
+            oidc-client-id: ${OIDC_CLIENT_ID}
+            oidc-username-claim: email
+            oidc-groups-claim: groups
+
+nodes:
+  - hostname: k8s-cp-02
+    ipAddress: 192.168.2.12
+    controlPlane: true
+    installDisk: /dev/sda
+    ignoreHostname: true
+    machineSpec: &machineSpec
+      mode: metal
+      arch: amd64
+      secureboot: true
+      bootMethod: iso
+    nameservers: &nameservers
+      - 192.168.0.1
+    networkInterfaces:
+      - interface: ens18
+        addresses:
+          - 192.168.2.12/20
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.1.1
+    patches:
+      - |-
+        apiVersion: v1alpha1
+        kind: HostnameConfig
+        hostname: k8s-cp-02
+        auto: off
+
+  - hostname: k8s-wk-01
+    ipAddress: 192.168.2.21
+    controlPlane: false
+    installDisk: /dev/sda
+    ignoreHostname: true
+    machineSpec: *machineSpec
+    nameservers: *nameservers
+    networkInterfaces:
+      - interface: ens18
+        addresses:
+          - 192.168.2.21/20
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.1.1
+    patches:
+      - |-
+        apiVersion: v1alpha1
+        kind: HostnameConfig
+        hostname: k8s-wk-01
+        auto: off
+
+  - hostname: k8s-wk-02
+    ipAddress: 192.168.2.22
+    controlPlane: false
+    installDisk: /dev/sda
+    ignoreHostname: true
+    machineSpec: *machineSpec
+    nameservers: *nameservers
+    networkInterfaces:
+      - interface: ens18
+        addresses:
+          - 192.168.2.22/20
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.1.1
+    patches:
+      - |-
+        machine:
+          disks:
+            - device: /dev/sdb
+              partitions:
+                - mountpoint: /var/mnt/local-storage
+          kubelet:
+            extraMounts:
+              - destination: /var/mnt/local-storage
+                type: bind
+                source: /var/mnt/local-storage
+                options:
+                  - bind
+                  - rshared
+                  - rw
+      - |-
+        apiVersion: v1alpha1
+        kind: HostnameConfig
+        hostname: k8s-wk-02
+        auto: off
+
+worker:
+  schematic: *talosSchematic
+  imageSchematic: *talosSchematic
+  filenameTmpl: "{{.Hostname}}.yaml"
