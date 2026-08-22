@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: app-backup
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: upload
+              env:
+                - name: BACKUP_DIR
+                  value: /data/ftbbackups3
+                - name: BACKUP_PREFIX
+                  value: minecraft/stone-block-4
+          volumes:
+            - name: datadir
+              persistentVolumeClaim:
+                claimName: stone-block-4-minecraft-datadir

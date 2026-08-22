@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: app-backup
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: upload
+              env:
+                - name: BACKUP_DIR
+                  value: /data/backups
+                - name: BACKUP_PREFIX
+                  value: minecraft/gtnh
+          volumes:
+            - name: datadir
+              persistentVolumeClaim:
+                claimName: gtnh-minecraft-datadir

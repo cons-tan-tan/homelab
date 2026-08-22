@@ -1,0 +1,99 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: app-backup
+spec:
+  schedule: "0 6 * * *"
+  timeZone: Asia/Tokyo
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 21600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1800
+      backoffLimit: 2
+      template:
+        spec:
+          serviceAccountName: app-backup-uploader
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/hostname: k8s-wk-02
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 3000
+            fsGroup: 2000
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: upload
+              image: rclone/rclone:1.75.0
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - /etc/app-backup/upload.sh
+              env:
+                - name: GCS_BUCKET
+                  value: constantan-homelab-app-backups-30d
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: /etc/app-backup/credential-configuration.json
+                - name: RCLONE_CONFIG_GCS_TYPE
+                  value: google cloud storage
+                - name: RCLONE_CONFIG_GCS_ENV_AUTH
+                  value: "true"
+                - name: RCLONE_CONFIG_GCS_BUCKET_POLICY_ONLY
+                  value: "true"
+                - name: RCLONE_CONFIG_GCS_NO_CHECK_BUCKET
+                  value: "true"
+                - name: HOME
+                  value: /tmp
+                - name: XDG_CONFIG_HOME
+                  value: /tmp/rclone
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - name: datadir
+                  mountPath: /data
+                  readOnly: true
+                - name: app-backup-config
+                  mountPath: /etc/app-backup
+                  readOnly: true
+                - name: workload-identity-token
+                  mountPath: /var/run/service-account
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: datadir
+              persistentVolumeClaim:
+                readOnly: true
+            - name: app-backup-config
+              configMap:
+                name: app-backup-config
+                defaultMode: 0444
+            - name: workload-identity-token
+              projected:
+                defaultMode: 0400
+                sources:
+                  - serviceAccountToken:
+                      path: token
+                      expirationSeconds: 3600
+                      audience: https://iam.googleapis.com/projects/690546259622/locations/global/workloadIdentityPools/homelab-k8s/providers/talos
+            - name: tmp
+              emptyDir:
+                medium: Memory
+                sizeLimit: 64Mi

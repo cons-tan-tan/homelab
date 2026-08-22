@@ -3,7 +3,8 @@ kind: Kustomization
 namespace: minecraft
 resources:
   - serviceaccount.yaml
-  - cronjobs.yaml
+  - gtnh
+  - stone-block-4
 configMapGenerator:
   - name: app-backup-config
     files:
