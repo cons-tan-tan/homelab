@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helmrepository-itzg.yaml
+  - backup
   - gtnh
   - stone-block-4
   - mc-router
