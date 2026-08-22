@@ -25,7 +25,7 @@ resource "google_storage_bucket" "app_backups_30d" {
 resource "google_storage_bucket_iam_member" "minecraft_backup_creator" {
   bucket = google_storage_bucket.app_backups_30d.name
   role   = "roles/storage.objectCreator"
-  member = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.kubernetes.name}/subject/system:serviceaccount:minecraft:app-backup-uploader"
+  member = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.kubernetes.name}/subject/${local.kubernetes_wif.subject}"
 
   condition {
     title       = "minecraft-backups-only"

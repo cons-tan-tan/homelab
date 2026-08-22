@@ -1,0 +1,6 @@
+---
+# Public contract between the Kubernetes issuer and GCP WIF.
+issuerUri: https://192.168.2.12:6443
+poolId: homelab-k8s
+providerId: talos
+subject: system:serviceaccount:minecraft:app-backup-uploader
