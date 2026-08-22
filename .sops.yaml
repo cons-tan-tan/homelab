@@ -9,10 +9,6 @@ creation_rules:
     pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
     # Kubernetes in-cluster SOPS age key.
     age: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
-  - path_regex: terraform/.*/secrets\.sops\.yaml$
-    pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
-  - path_regex: ^talos/talsecret\.sops\.yaml$
-    # Personal GPG key. Talos cluster secrets must not depend on the in-cluster age key.
-    pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
-  - path_regex: ^secrets/secretspec\.sops\.yaml$
+  - path_regex: \.sops\.ya?ml$
+    # Personal GPG key fallback for SOPS YAML not matched above.
     pgp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
