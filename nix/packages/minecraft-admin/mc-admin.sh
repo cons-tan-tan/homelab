@@ -13,6 +13,7 @@ Commands:
   start     Start the server and wait for it to become available
   backups   List available ZIP backups, newest first
   restore   Restore configured data roots from a ZIP backup
+  rollback  List, apply, or delete retained data states
 
 Run 'mc-admin <command> --help' for command-specific help.
 EOF
@@ -40,7 +41,8 @@ start_help() {
 Usage: mc-admin start
 
 Scale the configured server Deployment to one replica and wait for it to become
-available before returning.
+available before returning. Refuse to start while an interrupted restore or
+rollback requires manual recovery.
 EOF
 }
 
@@ -69,6 +71,59 @@ Options:
 Examples:
   mc-admin restore latest
   mc-admin restore --yes backup-20260822.zip
+EOF
+}
+
+rollback_help() {
+  cat <<'EOF'
+Usage: mc-admin rollback <command> [options]
+
+Manage data retained before a restore or rollback.
+
+Commands:
+  list    List rollback IDs, newest first
+  apply   Replace current data with a rollback
+  delete  Permanently delete a rollback
+
+Run 'mc-admin rollback <command> --help' for command-specific help.
+EOF
+}
+
+rollback_list_help() {
+  cat <<'EOF'
+Usage: mc-admin rollback list
+
+List rollback IDs, status, sizes, and retained data roots, newest first.
+INCOMPLETE indicates an interrupted operation. INVALID indicates missing or
+unsafe metadata. Neither status can be applied.
+EOF
+}
+
+rollback_apply_help() {
+  cat <<'EOF'
+Usage: mc-admin rollback apply [--yes] <id|latest>
+
+Replace the configured data roots with a rollback. The server must first be
+stopped with 'mc-admin stop'. The current data is retained as a new rollback,
+and the server is not started automatically.
+
+Use 'latest' to select the newest rollback.
+
+Options:
+  -y, --yes  Skip the confirmation prompt
+  -h, --help Show this help
+EOF
+}
+
+rollback_delete_help() {
+  cat <<'EOF'
+Usage: mc-admin rollback delete [--yes] <id>
+
+Permanently delete one rollback. Run 'mc-admin rollback list' to find its ID.
+
+Options:
+  -y, --yes  Skip the confirmation prompt
+  -h, --help Show this help
 EOF
 }
 
@@ -107,6 +162,20 @@ case "${subcommand}" in
       exit 0
     fi
     ;;
+  rollback)
+    if (( $# == 1 )) && [[ "$1" == --help || "$1" == -h ]]; then
+      rollback_help
+      exit 0
+    fi
+    if (( $# == 2 )) && [[ "$2" == --help || "$2" == -h ]]; then
+      case "$1" in
+        list|apply|delete)
+          "rollback_${1}_help"
+          exit 0
+          ;;
+      esac
+    fi
+    ;;
   *)
     echo "Unknown command: ${subcommand}" >&2
     main_help >&2
@@ -121,6 +190,9 @@ readonly wait_timeout="${MINECRAFT_WAIT_TIMEOUT:-180}"
 readonly pod_selector="${MINECRAFT_POD_SELECTOR:?MINECRAFT_POD_SELECTOR is required}"
 readonly restore_roots_config="${MINECRAFT_RESTORE_ROOTS:-}"
 readonly operation_lock="${data_dir}/.minecraft-admin-operation.lock"
+readonly rollback_root="${data_dir}/.minecraft-admin-rollbacks"
+readonly rollback_incomplete_marker=.incomplete
+readonly rollback_roots_manifest=.roots
 declare -a restore_roots=()
 
 if [[ -n "${MINECRAFT_NAMESPACE:-}" ]]; then
@@ -272,6 +344,7 @@ stop_server() {
 start_server() {
   local desired
 
+  assert_no_incomplete_data_operations
   desired="$(desired_replicas)" || return 1
   if [[ "${desired}" == 1 ]]; then
     echo "${deployment} is already configured for one replica"
@@ -303,7 +376,7 @@ parse_restore_roots() {
   local -A seen=()
 
   if [[ -z "${restore_roots_config}" ]]; then
-    echo 'MINECRAFT_RESTORE_ROOTS is required for mc-admin restore' >&2
+    echo 'MINECRAFT_RESTORE_ROOTS is required for restore and rollback operations' >&2
     return 1
   fi
   read -r -a restore_roots <<< "${restore_roots_config}"
@@ -316,12 +389,499 @@ parse_restore_roots() {
       echo "Invalid restore root: ${root}" >&2
       return 1
     fi
+    case "${root}" in
+      .roots|.incomplete|.minecraft-admin-*)
+        echo "Reserved restore root: ${root}" >&2
+        return 1
+        ;;
+    esac
     if [[ -n "${seen[${root}]:-}" ]]; then
       echo "Duplicate restore root: ${root}" >&2
       return 1
     fi
     seen["${root}"]=1
   done
+}
+
+valid_rollback_id() {
+  [[ "$1" =~ ^[0-9]{8}T[0-9]{6}Z\.[A-Za-z0-9]{6}$ ]]
+}
+
+validate_rollback_root() {
+  if [[ -e "${rollback_root}" || -L "${rollback_root}" ]] \
+    && [[ ! -d "${rollback_root}" || -L "${rollback_root}" ]]; then
+    echo "Rollback root is not a directory: ${rollback_root}" >&2
+    return 1
+  fi
+}
+
+assert_no_incomplete_data_operations() {
+  local incomplete_path=''
+
+  validate_rollback_root
+  if [[ -d "${rollback_root}" ]]; then
+    incomplete_path="$(
+      find "${rollback_root}" -mindepth 2 -maxdepth 2 \
+        -name "${rollback_incomplete_marker}" -print -quit
+    )"
+  fi
+  if [[ -z "${incomplete_path}" ]]; then
+    incomplete_path="$(
+      find "${data_dir}" -mindepth 1 -maxdepth 1 \
+        -name '.minecraft-admin-restore.*' -print -quit
+    )"
+  fi
+  if [[ -n "${incomplete_path}" ]]; then
+    echo "Refusing to start while an incomplete data operation exists: ${incomplete_path}" >&2
+    echo 'Inspect the retained and live data before removing the incomplete operation.' >&2
+    return 1
+  fi
+}
+
+create_rollback_dir() {
+  local rollback_dir
+  local timestamp
+
+  validate_rollback_root
+  timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  mkdir -p -- "${rollback_root}"
+  rollback_dir="$(mktemp -d "${rollback_root}/${timestamp}.XXXXXX")"
+  if ! touch -- "${rollback_dir}/${rollback_incomplete_marker}"; then
+    rmdir -- "${rollback_dir}"
+    return 1
+  fi
+  if ! printf '%s\n' "${restore_roots[@]}" > "${rollback_dir}/${rollback_roots_manifest}"; then
+    rm -- "${rollback_dir}/${rollback_incomplete_marker}"
+    rmdir -- "${rollback_dir}"
+    return 1
+  fi
+  printf '%s\n' "${rollback_dir}"
+}
+
+finalize_rollback_dir() {
+  local rollback_dir="$1"
+  local marker="${rollback_dir}/${rollback_incomplete_marker}"
+
+  if [[ ! -f "${marker}" || -L "${marker}" ]]; then
+    echo "Rollback transaction marker is missing: ${rollback_dir##*/}" >&2
+    return 1
+  fi
+  rm -- "${marker}"
+}
+
+rollback_ids() {
+  local id
+
+  validate_rollback_root
+  [[ -d "${rollback_root}" ]] || return 0
+  while IFS= read -r id; do
+    valid_rollback_id "${id}" || continue
+    printf '%s\n' "${id}"
+  done < <(
+    find "${rollback_root}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+      | sort --reverse
+  )
+}
+
+complete_rollback_ids() {
+  local id
+  local marker
+  local manifest
+
+  while IFS= read -r id; do
+    marker="${rollback_root}/${id}/${rollback_incomplete_marker}"
+    manifest="${rollback_root}/${id}/${rollback_roots_manifest}"
+    if [[ ! -e "${marker}" && ! -L "${marker}" \
+      && -f "${manifest}" && ! -L "${manifest}" ]]; then
+      printf '%s\n' "${id}"
+    fi
+  done < <(rollback_ids)
+}
+
+newest_rollback_id() {
+  complete_rollback_ids | awk 'NR == 1 { print; exit }'
+}
+
+resolve_rollback_dir() {
+  local requested_id="$1"
+
+  validate_rollback_root
+  if [[ "${requested_id}" == latest ]]; then
+    requested_id="$(newest_rollback_id)"
+    if [[ -z "${requested_id}" ]]; then
+      echo "No rollbacks found in ${rollback_root}" >&2
+      return 1
+    fi
+  fi
+  if ! valid_rollback_id "${requested_id}"; then
+    echo "Invalid rollback ID: ${requested_id}" >&2
+    return 2
+  fi
+  if [[ ! -d "${rollback_root}/${requested_id}" || -L "${rollback_root}/${requested_id}" ]]; then
+    echo "Rollback does not exist: ${requested_id}" >&2
+    return 1
+  fi
+  printf '%s\n' "${rollback_root}/${requested_id}"
+}
+
+validate_live_roots() {
+  local root
+
+  for root in "${restore_roots[@]}"; do
+    if [[ -e "${data_dir}/${root}" || -L "${data_dir}/${root}" ]] \
+      && [[ ! -d "${data_dir}/${root}" || -L "${data_dir}/${root}" ]]; then
+      echo "Current data root is not a directory: ${root}" >&2
+      return 1
+    fi
+  done
+}
+
+validate_rollback_dir() {
+  local rollback_dir="$1"
+  local entry
+  local entry_name
+  local entries_file
+  local index
+  local root
+  local valid_entry
+  local validation_failed=false
+  local -a saved_roots=()
+
+  if [[ -e "${rollback_dir}/${rollback_incomplete_marker}" \
+    || -L "${rollback_dir}/${rollback_incomplete_marker}" ]]; then
+    echo "Rollback transaction is incomplete: ${rollback_dir##*/}" >&2
+    return 1
+  fi
+  if [[ ! -f "${rollback_dir}/${rollback_roots_manifest}" \
+    || -L "${rollback_dir}/${rollback_roots_manifest}" ]]; then
+    echo "Rollback roots manifest is missing: ${rollback_dir##*/}" >&2
+    return 1
+  fi
+  mapfile -t saved_roots < "${rollback_dir}/${rollback_roots_manifest}"
+  if (( ${#saved_roots[@]} != ${#restore_roots[@]} )); then
+    echo "Rollback roots do not match MINECRAFT_RESTORE_ROOTS: ${rollback_dir##*/}" >&2
+    return 1
+  fi
+  for index in "${!restore_roots[@]}"; do
+    if [[ "${saved_roots[${index}]}" != "${restore_roots[${index}]}" ]]; then
+      echo "Rollback roots do not match MINECRAFT_RESTORE_ROOTS: ${rollback_dir##*/}" >&2
+      return 1
+    fi
+  done
+  entries_file="$(mktemp /tmp/mc-admin-rollback-entries.XXXXXX)"
+  if ! find "${rollback_dir}" -mindepth 1 -maxdepth 1 -print0 > "${entries_file}"; then
+    rm -- "${entries_file}"
+    echo "Failed to read rollback: ${rollback_dir##*/}" >&2
+    return 1
+  fi
+  while IFS= read -r -d '' entry; do
+    entry_name="${entry##*/}"
+    if [[ "${entry_name}" == "${rollback_roots_manifest}" ]]; then
+      continue
+    fi
+    valid_entry=false
+    for root in "${restore_roots[@]}"; do
+      if [[ "${entry_name}" == "${root}" ]]; then
+        valid_entry=true
+        break
+      fi
+    done
+    if [[ "${valid_entry}" != true ]]; then
+      echo "Rollback contains an unexpected root: ${entry_name}" >&2
+      validation_failed=true
+      break
+    fi
+    if [[ ! -d "${entry}" || -L "${entry}" ]]; then
+      echo "Rollback root is not a directory: ${entry_name}" >&2
+      validation_failed=true
+      break
+    fi
+  done < "${entries_file}"
+  rm -- "${entries_file}"
+  [[ "${validation_failed}" != true ]]
+}
+
+list_rollbacks() {
+  local id
+  local entries
+  local rollback_dir
+  local size
+  local status
+  local found=false
+
+  validate_rollback_root
+  printf '%-24s %10s %8s  %s\n' ID STATUS SIZE ROOTS
+  while IFS= read -r id; do
+    found=true
+    rollback_dir="${rollback_root}/${id}"
+    status=READY
+    if [[ -e "${rollback_dir}/${rollback_incomplete_marker}" \
+      || -L "${rollback_dir}/${rollback_incomplete_marker}" ]]; then
+      status=INCOMPLETE
+    elif [[ ! -f "${rollback_dir}/${rollback_roots_manifest}" \
+      || -L "${rollback_dir}/${rollback_roots_manifest}" ]]; then
+      status=INVALID
+    fi
+    size="$(du -sh -- "${rollback_dir}" | awk '{ print $1 }')"
+    entries="$(
+      find "${rollback_dir}" -mindepth 1 -maxdepth 1 \
+        ! -name "${rollback_incomplete_marker}" \
+        ! -name "${rollback_roots_manifest}" -printf '%f\n' \
+        | sort | paste -sd ' ' -
+    )"
+    printf '%-24s %10s %8s  %s\n' "${id}" "${status}" "${size}" "${entries:--}"
+  done < <(rollback_ids)
+  if [[ "${found}" != true ]]; then
+    echo 'No rollbacks found'
+  fi
+}
+
+apply_rollback() (
+  local assume_yes=false
+  local requested_id=''
+  local rollback_dir
+  local rollback_id
+  local replacement_dir=''
+  local root
+  local committed=false
+  local transaction_active=false
+  local -a installed_roots=()
+  local -a moved_roots=()
+
+  # Invoked indirectly by the EXIT trap below.
+  # shellcheck disable=SC2329
+  restore_pre_apply_data() {
+    local recovery_failed=false
+    local rollback_root_name
+
+    for rollback_root_name in "${installed_roots[@]}"; do
+      if [[ -e "${data_dir}/${rollback_root_name}" \
+        || -L "${data_dir}/${rollback_root_name}" ]]; then
+        if [[ -e "${rollback_dir}/${rollback_root_name}" \
+          || -L "${rollback_dir}/${rollback_root_name}" ]] \
+          || ! mv -T -- "${data_dir}/${rollback_root_name}" \
+            "${rollback_dir}/${rollback_root_name}"; then
+          recovery_failed=true
+        fi
+      fi
+    done
+    for rollback_root_name in "${moved_roots[@]}"; do
+      if [[ -e "${replacement_dir}/${rollback_root_name}" \
+        || -L "${replacement_dir}/${rollback_root_name}" ]]; then
+        if [[ -e "${data_dir}/${rollback_root_name}" \
+          || -L "${data_dir}/${rollback_root_name}" ]] \
+          || ! mv -T -- "${replacement_dir}/${rollback_root_name}" \
+            "${data_dir}/${rollback_root_name}"; then
+          recovery_failed=true
+        fi
+      fi
+    done
+    if [[ "${recovery_failed}" != true ]]; then
+      if ! rm -f -- "${rollback_dir}/${rollback_incomplete_marker}"; then
+        recovery_failed=true
+      fi
+      if [[ -n "${replacement_dir}" && -d "${replacement_dir}" ]]; then
+        if ! rm -f -- "${replacement_dir}/${rollback_incomplete_marker}" \
+          "${replacement_dir}/${rollback_roots_manifest}" \
+          || ! rmdir -- "${replacement_dir}"; then
+          recovery_failed=true
+        fi
+      fi
+    fi
+    [[ "${recovery_failed}" != true ]]
+  }
+
+  remove_consumed_rollback() {
+    if ! rm -- "${rollback_dir}/${rollback_incomplete_marker}" \
+      "${rollback_dir}/${rollback_roots_manifest}"; then
+      return 1
+    fi
+    rmdir -- "${rollback_dir}"
+  }
+
+  # shellcheck disable=SC2329
+  cleanup_apply() {
+    local exit_status=$?
+
+    trap - EXIT HUP INT TERM
+    if [[ "${transaction_active}" == true ]]; then
+      if ! restore_pre_apply_data; then
+        echo "Rollback recovery failed; inspect ${rollback_dir} and ${replacement_dir}" >&2
+      fi
+    elif [[ "${committed}" == true ]]; then
+      remove_consumed_rollback || true
+    fi
+    exit "${exit_status}"
+  }
+  trap cleanup_apply EXIT
+  trap 'exit 129' HUP
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
+  while (( $# > 0 )); do
+    case "$1" in
+      --yes|-y)
+        assume_yes=true
+        ;;
+      --help|-h)
+        echo "$1 cannot be combined with other arguments" >&2
+        rollback_apply_help >&2
+        return 2
+        ;;
+      -* )
+        echo "Unknown option: $1" >&2
+        rollback_apply_help >&2
+        return 2
+        ;;
+      *)
+        if [[ -n "${requested_id}" ]]; then
+          echo 'Only one rollback may be specified' >&2
+          return 2
+        fi
+        requested_id="$1"
+        ;;
+    esac
+    shift
+  done
+
+  if [[ -z "${requested_id}" ]]; then
+    rollback_apply_help >&2
+    return 2
+  fi
+  parse_restore_roots
+  rollback_dir="$(resolve_rollback_dir "${requested_id}")"
+  rollback_id="${rollback_dir##*/}"
+  validate_rollback_dir "${rollback_dir}"
+  validate_live_roots
+  assert_server_stopped \
+    "${deployment} must be stopped with mc-admin stop before applying a rollback" || return 1
+
+  if [[ "${assume_yes}" != true ]]; then
+    printf 'Replace %s with rollback %s? [y/N] ' "${restore_roots[*]}" "${rollback_id}"
+    read -r confirmation
+    if [[ "${confirmation}" != y && "${confirmation}" != Y ]]; then
+      echo 'Rollback cancelled'
+      return 1
+    fi
+  fi
+
+  assert_server_stopped \
+    "${deployment} was started while preparing the rollback; refusing to continue" || return 1
+  validate_rollback_dir "${rollback_dir}"
+  validate_live_roots
+  touch -- "${rollback_dir}/${rollback_incomplete_marker}"
+  transaction_active=true
+  replacement_dir="$(create_rollback_dir)"
+
+  for root in "${restore_roots[@]}"; do
+    if [[ -e "${data_dir}/${root}" || -L "${data_dir}/${root}" ]]; then
+      moved_roots+=("${root}")
+      if ! mv -T -- "${data_dir}/${root}" "${replacement_dir}/${root}"; then
+        return 1
+      fi
+    fi
+  done
+
+  for root in "${restore_roots[@]}"; do
+    if [[ -e "${rollback_dir}/${root}" || -L "${rollback_dir}/${root}" ]]; then
+      installed_roots+=("${root}")
+      if ! mv -T -- "${rollback_dir}/${root}" "${data_dir}/${root}"; then
+        return 1
+      fi
+    fi
+  done
+  finalize_rollback_dir "${replacement_dir}"
+  committed=true
+  transaction_active=false
+  if ! remove_consumed_rollback; then
+    echo "Applied rollback but failed to remove ${rollback_dir}" >&2
+  fi
+  committed=false
+
+  echo "Applied rollback ${rollback_id}"
+  echo "Previous data is retained at ${replacement_dir}"
+  echo 'Run mc-admin start after inspecting the restored files.'
+)
+
+delete_rollback() {
+  local assume_yes=false
+  local requested_id=''
+  local rollback_dir
+  local rollback_id
+
+  while (( $# > 0 )); do
+    case "$1" in
+      --yes|-y)
+        assume_yes=true
+        ;;
+      --help|-h)
+        echo "$1 cannot be combined with other arguments" >&2
+        rollback_delete_help >&2
+        return 2
+        ;;
+      -* )
+        echo "Unknown option: $1" >&2
+        rollback_delete_help >&2
+        return 2
+        ;;
+      *)
+        if [[ -n "${requested_id}" ]]; then
+          echo 'Only one rollback may be specified' >&2
+          return 2
+        fi
+        requested_id="$1"
+        ;;
+    esac
+    shift
+  done
+
+  if [[ -z "${requested_id}" || "${requested_id}" == latest ]]; then
+    echo 'Specify an explicit rollback ID to delete' >&2
+    rollback_delete_help >&2
+    return 2
+  fi
+  rollback_dir="$(resolve_rollback_dir "${requested_id}")"
+  rollback_id="${rollback_dir##*/}"
+
+  if [[ "${assume_yes}" != true ]]; then
+    printf 'Permanently delete rollback %s? [y/N] ' "${rollback_id}"
+    read -r confirmation
+    if [[ "${confirmation}" != y && "${confirmation}" != Y ]]; then
+      echo 'Delete cancelled'
+      return 1
+    fi
+  fi
+
+  rm -rf -- "${rollback_dir}"
+  echo "Deleted rollback ${rollback_id}"
+}
+
+rollback_command() {
+  local action
+
+  if (( $# == 0 )); then
+    rollback_help >&2
+    return 2
+  fi
+  action="$1"
+  shift
+  case "${action}" in
+    list)
+      if (( $# != 0 )); then
+        echo 'mc-admin rollback list does not accept arguments' >&2
+        rollback_list_help >&2
+        return 2
+      fi
+      list_rollbacks
+      ;;
+    apply) apply_rollback "$@" ;;
+    delete) delete_rollback "$@" ;;
+    *)
+      echo "Unknown rollback command: ${action}" >&2
+      rollback_help >&2
+      return 2
+      ;;
+  esac
 }
 
 validate_archive_entries() {
@@ -386,22 +946,76 @@ restore_backup() (
   local archive_identity
   local archive_name
   local archive_snapshot
-  local staging_dir
-  local rollback_dir
+  local staging_dir=''
+  local rollback_dir=''
   local entries_file
   local metadata_file
   local root
-  local timestamp
+  local transaction_active=false
   local -a installed_roots=()
   local -a moved_roots=()
 
-  staging_dir=''
+  # Invoked indirectly by the EXIT trap below.
+  # shellcheck disable=SC2329
+  restore_previous_data() {
+    local recovery_failed=false
+    local rollback_root_name
+
+    for rollback_root_name in "${installed_roots[@]}"; do
+      if [[ -e "${data_dir}/${rollback_root_name}" \
+        || -L "${data_dir}/${rollback_root_name}" ]]; then
+        if [[ -e "${staging_dir}/${rollback_root_name}" \
+          || -L "${staging_dir}/${rollback_root_name}" ]] \
+          || ! mv -T -- "${data_dir}/${rollback_root_name}" \
+            "${staging_dir}/${rollback_root_name}"; then
+          recovery_failed=true
+        fi
+      fi
+    done
+    for rollback_root_name in "${moved_roots[@]}"; do
+      if [[ -e "${rollback_dir}/${rollback_root_name}" \
+        || -L "${rollback_dir}/${rollback_root_name}" ]]; then
+        if [[ -e "${data_dir}/${rollback_root_name}" \
+          || -L "${data_dir}/${rollback_root_name}" ]] \
+          || ! mv -T -- "${rollback_dir}/${rollback_root_name}" \
+            "${data_dir}/${rollback_root_name}"; then
+          recovery_failed=true
+        fi
+      fi
+    done
+    if [[ "${recovery_failed}" != true ]]; then
+      if ! rm -f -- "${rollback_dir}/${rollback_incomplete_marker}" \
+        "${rollback_dir}/${rollback_roots_manifest}" \
+        || ! rmdir -- "${rollback_dir}"; then
+        recovery_failed=true
+      fi
+    fi
+    [[ "${recovery_failed}" != true ]]
+  }
+
   # Invoked indirectly by the EXIT trap below.
   # shellcheck disable=SC2329
   cleanup_restore() {
-    [[ -z "${staging_dir}" ]] || rm -rf -- "${staging_dir}"
+    local exit_status=$?
+    local recovery_failed=false
+
+    trap - EXIT HUP INT TERM
+    if [[ "${transaction_active}" == true ]] && ! restore_previous_data; then
+      recovery_failed=true
+      echo "Restore recovery failed; inspect ${rollback_dir} and ${staging_dir}" >&2
+    fi
+    if [[ "${recovery_failed}" != true && -n "${staging_dir}" ]] \
+      && ! rm -rf -- "${staging_dir}"; then
+      echo "Failed to remove restore staging directory: ${staging_dir}" >&2
+      (( exit_status != 0 )) || exit_status=1
+    fi
+    [[ "${recovery_failed}" != true ]] || exit_status=1
+    exit "${exit_status}"
   }
   trap cleanup_restore EXIT
+  trap 'exit 129' HUP
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
 
   while (( $# > 0 )); do
     case "$1" in
@@ -496,41 +1110,28 @@ restore_backup() (
   # being checked and extracted. Never switch live world data in that state.
   assert_server_stopped \
     "${deployment} was started while preparing the restore; refusing to continue" || return 1
+  validate_live_roots
 
-  timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
-  mkdir -p "${data_dir}/.minecraft-admin-rollbacks"
-  rollback_dir="$(mktemp -d "${data_dir}/.minecraft-admin-rollbacks/${timestamp}.XXXXXX")"
-
-  restore_previous_data() {
-    local rollback_root
-
-    for rollback_root in "${installed_roots[@]}"; do
-      [[ ! -e "${data_dir}/${rollback_root}" ]] \
-        || mv "${data_dir}/${rollback_root}" "${staging_dir}/${rollback_root}"
-    done
-    for rollback_root in "${moved_roots[@]}"; do
-      [[ ! -e "${rollback_dir}/${rollback_root}" ]] \
-        || mv "${rollback_dir}/${rollback_root}" "${data_dir}/${rollback_root}"
-    done
-  }
+  rollback_dir="$(create_rollback_dir)"
+  transaction_active=true
 
   for root in "${restore_roots[@]}"; do
-    if [[ -e "${data_dir}/${root}" ]]; then
-      if ! mv "${data_dir}/${root}" "${rollback_dir}/${root}"; then
-        restore_previous_data
+    if [[ -e "${data_dir}/${root}" || -L "${data_dir}/${root}" ]]; then
+      moved_roots+=("${root}")
+      if ! mv -T -- "${data_dir}/${root}" "${rollback_dir}/${root}"; then
         return 1
       fi
-      moved_roots+=("${root}")
     fi
   done
 
   for root in "${restore_roots[@]}"; do
-    if ! mv "${staging_dir}/${root}" "${data_dir}/${root}"; then
-      restore_previous_data
+    installed_roots+=("${root}")
+    if ! mv -T -- "${staging_dir}/${root}" "${data_dir}/${root}"; then
       return 1
     fi
-    installed_roots+=("${root}")
   done
+  finalize_rollback_dir "${rollback_dir}"
+  transaction_active=false
 
   echo "Restored ${archive_name}"
   echo "Previous data is retained at ${rollback_dir}"
@@ -543,4 +1144,5 @@ case "${subcommand}" in
   start) with_operation_lock start_server ;;
   backups) list_backups ;;
   restore) with_operation_lock restore_backup "$@" ;;
+  rollback) with_operation_lock rollback_command "$@" ;;
 esac
