@@ -43,19 +43,6 @@ spec:
             - name: ssh
               containerPort: 2222
               protocol: TCP
-          startupProbe:
-            tcpSocket:
-              port: ssh
-            failureThreshold: 30
-            periodSeconds: 2
-          livenessProbe:
-            tcpSocket:
-              port: ssh
-            periodSeconds: 30
-          readinessProbe:
-            tcpSocket:
-              port: ssh
-            periodSeconds: 10
           resources:
             requests:
               cpu: 10m
