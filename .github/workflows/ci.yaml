@@ -1,0 +1,70 @@
+---
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flake-eval:
+    name: Flake / all systems / evaluate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - parallel:
+          - name: Checkout
+            uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            with:
+              persist-credentials: false
+
+          - name: Install Nix
+            uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+            with:
+              enable_kvm: false
+
+      - name: Evaluate flake
+        run: nix flake check --all-systems --no-build
+
+  checks:
+    name: Checks / x86_64-linux / build
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - parallel:
+          - name: Checkout
+            uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            with:
+              persist-credentials: false
+
+          - name: Set up Nix and Hestia
+            uses: $/.github/actions/setup-hestia
+
+      - name: Build checks
+        run: nix flake check --keep-going --option system x86_64-linux
+
+  images:
+    name: Image / ${{ matrix.name }}
+    needs:
+      - flake-eval
+      - checks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: minecraft-admin
+            package: minecraft-admin-image
+    uses: $/.github/workflows/build-image.yaml
+    with:
+      package: ${{ matrix.package }}
+      ref: ${{ github.sha }}
