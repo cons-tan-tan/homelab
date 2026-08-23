@@ -1,0 +1,3 @@
+# Each key grants a full shell with direct data-PVC and Kubernetes scale access.
+# Source: https://github.com/cons-tan-tan.keys
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKm+q7Q7YZOPoBRbEzJ7wIYKkUFrhmpIYk4PMn/obPnq constantan

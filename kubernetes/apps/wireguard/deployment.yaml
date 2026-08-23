@@ -110,6 +110,9 @@ spec:
             - name: minecraft
               containerPort: 25565
               protocol: TCP
+            - name: gtnh-admin-ssh
+              containerPort: 2222
+              protocol: TCP
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

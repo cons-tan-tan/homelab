@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 {
   users.mutableUsers = false;
 
@@ -7,6 +7,16 @@
   users.users.constantan = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKm+q7Q7YZOPoBRbEzJ7wIYKkUFrhmpIYk4PMn/obPnq"
+    ];
+  };
+
+  # This account can only open the GTNH admin SSH connection over WireGuard.
+  # Per-server authorization is enforced again by the target Pod's keys.
+  users.users.tunnel = {
+    isNormalUser = true;
+    shell = "${pkgs.shadow}/bin/nologin";
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKm+q7Q7YZOPoBRbEzJ7wIYKkUFrhmpIYk4PMn/obPnq"
     ];
@@ -35,5 +45,18 @@
       PasswordAuthentication = false;
       PermitRootLogin = lib.mkForce "no";
     };
+
+    extraConfig = ''
+      Match User tunnel
+        AuthenticationMethods publickey
+        AllowAgentForwarding no
+        AllowStreamLocalForwarding no
+        AllowTcpForwarding local
+        GatewayPorts no
+        PermitOpen 10.90.0.2:2222
+        PermitTTY no
+        X11Forwarding no
+        ForceCommand ${pkgs.coreutils}/bin/false
+    '';
   };
 }

@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: gtnh-admin-host-key-v1
+    namespace: minecraft
+stringData:
+    ssh_host_ed25519_key: ENC[AES256_GCM,data:5zF0QPfkdnTJYHMMco5J4zq1KjcqrgNKbFWvrDqZellqg+hHcepkVzvxIrpoKwPZmtBkyHnTDfT7+0zAQE2k5HFZGkM3v11r0IDTmvwnk/78yEJ7BNgiFIK7JrtBfRhIytiZKpb6zduGAQ8njRWlo3erH4lH/VZNj+GUBnHXiuaSxw/YAqQtkDlsYd0HaH33JsVTwPF1+iaoTqGS+PcSICZbvFxeQNXt7vCRbIRr1SCv4aTywgZQDjtXWAB2aK8H+IXAXNH5RQtpCMtcY62Jzon9anFZUOPyFVDHa/5bZ00YCIJBHOcsJId+EaVMcZP3AUGoIlskIhoIx6bbFEM2REOM6UngjX1eIQTFi9xHVNmvtc/9JZfYyT2t0ShgMNgBeGl1nTa1mq0R83ysLSsntSRshpSNZHxEoFA9hb4a6QtkWaS3RNzUHfDaV/2kYYiSfpWIFRurh1ps7JIbcM5dxv2tJDC6vv3HEY8e6/mex6GPhdu3fvOkvP5mtBeh2PHMyw9Cn93O12a3/ZKayl56yM0LGMNbRvlygT06hkEtN7CRM0E=,iv:U0V7NkaVIcIPS/+5gZOmLXU1r8CeCniCWxNtvpMM9KE=,tag:9zW4VG2DesmSAi4qvG2hIw==,type:str]
+immutable: true
+type: Opaque
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBlbllMWlBQZDduY2Z3R2NQ
+            RlNUYytTUEVjY2lZc3RKNHFZb2E0aTFuUVVnCnpiR3ZCNUdmZklaTkdDaVg4UTgx
+            WkxPcmV2bWpDN0FjcnV6VGFxWDA1c1kKLS0tIEs2VDZaMnhlMEZTNkZtd3NYWDRO
+            OXdnY0JLelg4K0piL2V5MExhVnhaTDQKM98mO6ypl0eUUB0Z2qV/mMb/Vpbv+xQn
+            OIQYtcMxEhEd1lbRc8yoHpITI4lhis38toBH6uhvTHWmPQ8RjRt52Q==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age182t6rrn2ymaqrmf28xln99kyq0uek62g7yp27am766p9k2z6hpascv5qr3
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-08-22T19:06:43Z"
+    mac: ENC[AES256_GCM,data:KXmHu8/FY4U6iwpGc0rBXWJqC3Rwfe9dgoizMQOb4MXdCWt+njlCYxUKo4cS6trThoy1V8Sq6c1giS0Ef+3jOn6jV2/gfF5ZrqS1PDJae5o2Gy/BolbnLxbcA7I2BMXRZCSGWJCV83UOzqZkLkXEU5Rr/KC+C22SiLCAk8MkhMY=,iv:H3gIgTEnPye3csBGaxdk7DIhgFctfG4oRw/UEhZcUyQ=,tag:h+SM7VA/BYMWGxOOQu7azw==,type:str]
+    pgp:
+        - created_at: "2026-08-22T19:06:09Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hF4DD5j8IMh4Q5oSAQdACsokGBJqxbRnCrzizdZDhFGdmNJ37zkvqGiX643xeU8w
+            phB38+3UgIWoyDWIaTs49tPymMpu0YwfFRGUalvV+ZIOjLy5EK+/CcKRR+juQYsm
+            0l4BVzWDHEbXlOHiw45nQKJeFyhzPKNz4J2Say17NzXMPFAMjGxzCw4KL+o5E/w3
+            UE21ShCpI6kSwbVUyQc0OVMmqtyLq6yVb2VXQBAbQyXovLvcJKxxpkJbRVVZ1Th6
+            =MvhD
+            -----END PGP MESSAGE-----
+          fp: 7B3F36D6C622479E2EAC2E6C6250E02A31E09AFE
+    version: 3.13.3

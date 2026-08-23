@@ -1,0 +1,30 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gtnh-admin
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    resourceNames:
+      - gtnh-minecraft
+    verbs:
+      - get
+  - apiGroups:
+      - apps
+    resources:
+      - deployments/scale
+    resourceNames:
+      - gtnh-minecraft
+    verbs:
+      - get
+      - patch
+  # Deployment status can reach zero before a terminating Minecraft Pod has
+  # finished saving and released the shared PVC.
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - list

@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gtnh-admin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gtnh-admin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gtnh-admin
+    spec:
+      serviceAccountName: gtnh-admin
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 10
+      # Pin both first consumers before local-path binds the PVC to a node.
+      nodeSelector:
+        kubernetes.io/hostname: k8s-wk-02
+      securityContext:
+        supplementalGroups:
+          - 2000
+          - 3000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ssh
+          # No digest exists before the first main publish. Once the package is
+          # public, Renovate opens (but never auto-merges) digest-pin updates.
+          image: ghcr.io/cons-tan-tan/minecraft-admin:main
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MINECRAFT_DEPLOYMENT
+              value: gtnh-minecraft
+            - name: MINECRAFT_POD_SELECTOR
+              value: app=gtnh-minecraft
+            - name: MINECRAFT_RESTORE_ROOTS
+              value: world visualprospecting
+          ports:
+            - name: ssh
+              containerPort: 2222
+              protocol: TCP
+          startupProbe:
+            tcpSocket:
+              port: ssh
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            tcpSocket:
+              port: ssh
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: ssh
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - SETGID
+                - SETUID
+                - SYS_CHROOT
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: authorized-keys
+              mountPath: /config
+              readOnly: true
+            - name: host-key
+              mountPath: /host-key
+              readOnly: true
+            - name: home
+              mountPath: /home/minecraft
+            - name: runtime
+              mountPath: /run/minecraft-admin
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: gtnh-minecraft-datadir
+        - name: authorized-keys
+          configMap:
+            name: gtnh-admin-authorized-keys
+            defaultMode: 0444
+        - name: host-key
+          secret:
+            secretName: gtnh-admin-host-key-v1
+            defaultMode: 0400
+        - name: home
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: runtime
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Mi
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
