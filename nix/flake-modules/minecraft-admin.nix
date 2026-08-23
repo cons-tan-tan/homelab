@@ -81,6 +81,12 @@
             networks: files dns
             EOF
 
+            cat > etc/profile <<'EOF'
+            if [ -d "''${MINECRAFT_DATA_DIR:-/data}" ]; then
+              cd -- "''${MINECRAFT_DATA_DIR:-/data}"
+            fi
+            EOF
+
             cat > etc/ssh/sshd_config <<'EOF'
             Port 2222
             ListenAddress 0.0.0.0
@@ -103,7 +109,7 @@
             EOF
 
             chmod 0755 home/minecraft run var/empty
-            chmod 0644 etc/passwd etc/group etc/nsswitch.conf etc/ssh/sshd_config
+            chmod 0644 etc/passwd etc/group etc/nsswitch.conf etc/profile etc/ssh/sshd_config
           '';
           config = {
             Cmd = [ "${minecraftAdminEntrypoint}/bin/minecraft-admin-entrypoint" ];
