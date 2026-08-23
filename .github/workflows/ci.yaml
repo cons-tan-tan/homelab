@@ -53,26 +53,11 @@ jobs:
       - name: Build checks
         run: nix flake check --keep-going --option system x86_64-linux
 
-  images:
-    name: Image / ${{ matrix.name }}
-    needs:
-      - flake-eval
-      - checks
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: minecraft-admin
-            package: minecraft-admin-image
-    uses: $/.github/workflows/build-image.yaml
-    with:
-      package: ${{ matrix.package }}
-      ref: ${{ github.sha }}
-
   release:
     name: Release
     needs:
-      - images
+      - flake-eval
+      - checks
     if: >-
       (github.event_name == 'push' ||
        github.event_name == 'workflow_dispatch') &&

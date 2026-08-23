@@ -15,6 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Keep each image transitively covered by an x86_64-linux flake check so
+        # PRs build and test it before this write-capable job.
         include:
           - name: minecraft-admin
             package: minecraft-admin-image
