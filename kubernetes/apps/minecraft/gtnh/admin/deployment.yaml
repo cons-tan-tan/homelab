@@ -31,7 +31,7 @@ spec:
           # No digest exists before the first main publish. Once the package is
           # public, Renovate opens (but never auto-merges) digest-pin updates.
           image: ghcr.io/cons-tan-tan/minecraft-admin:main
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: MINECRAFT_DEPLOYMENT
               value: gtnh-minecraft
