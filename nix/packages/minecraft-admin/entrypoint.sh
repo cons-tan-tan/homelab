@@ -36,7 +36,6 @@ install -d -m 0755 "${home_dir}"
 chown 1000:3000 "${home_dir}"
 install -d -m 0755 -o 0 -g 0 "${runtime_dir}"
 install -m 0600 "${authorized_keys_source}" "${authorized_keys}"
-chown 1000:3000 "${authorized_keys}"
 install -m 0600 "${host_key_source}" "${host_key}"
 install -m 0644 "${sshd_config_source}" "${sshd_config}"
 
