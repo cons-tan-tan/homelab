@@ -61,6 +61,7 @@ spec:
                 - ALL
               add:
                 - CHOWN
+                - FOWNER
                 - SETGID
                 - SETUID
                 - SYS_CHROOT
