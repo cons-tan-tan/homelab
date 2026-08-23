@@ -11,6 +11,8 @@ readonly host_key="${runtime_dir}/ssh_host_ed25519_key"
 readonly sshd_config_source=/etc/ssh/sshd_config
 readonly sshd_config="${runtime_dir}/sshd_config"
 readonly -a session_environment=(
+  KUBERNETES_SERVICE_HOST
+  KUBERNETES_SERVICE_PORT
   MINECRAFT_NAMESPACE
   MINECRAFT_DEPLOYMENT
   MINECRAFT_DATA_DIR
