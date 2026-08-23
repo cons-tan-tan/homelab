@@ -21,8 +21,9 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: k8s-wk-02
       securityContext:
+        fsGroup: 2000
+        fsGroupChangePolicy: OnRootMismatch
         supplementalGroups:
-          - 2000
           - 3000
         seccompProfile:
           type: RuntimeDefault
