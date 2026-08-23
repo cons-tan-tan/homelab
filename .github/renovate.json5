@@ -1,0 +1,21 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended"],
+  dependencyDashboard: false,
+  enabledManagers: ["kubernetes"],
+  packageRules: [
+    {
+      description: "Disable container updates by default during Renovate rollout",
+      matchDatasources: ["docker"],
+      enabled: false,
+    },
+    {
+      description: "Open reviewed PRs for the Minecraft admin image digest",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/cons-tan-tan/minecraft-admin"],
+      enabled: true,
+      pinDigests: true,
+      automerge: false,
+    },
+  ],
+}
