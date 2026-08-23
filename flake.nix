@@ -20,6 +20,7 @@
         ./nix/flake-modules/bootstrap.nix
         ./nix/flake-modules/dev-shell.nix
         ./nix/flake-modules/deploy.nix
+        ./nix/flake-modules/minecraft-admin.nix
         ./nix/flake-modules/nixos.nix
       ];
 
