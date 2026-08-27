@@ -29,10 +29,10 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ssh
-          # No digest exists before the first main publish. Once the package is
-          # public, Renovate opens (but never auto-merges) digest-pin updates.
-          image: ghcr.io/cons-tan-tan/minecraft-admin:main
-          imagePullPolicy: Always
+          # Keep the runtime immutable; update this digest manually after an
+          # intentionally reviewed minecraft-admin image release.
+          image: ghcr.io/cons-tan-tan/minecraft-admin:main@sha256:af0f262c278823fafc2ac14cb6b31f6157698eed74ac3f7e498b4968fddf33c3
+          imagePullPolicy: IfNotPresent
           env:
             - name: MINECRAFT_DEPLOYMENT
               value: gtnh-minecraft
@@ -68,8 +68,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: authorized-keys
+            - name: admin-config
               mountPath: /config
+              readOnly: true
+            - name: admin-config
+              mountPath: /etc/ssh/sshd_config
+              subPath: sshd_config
               readOnly: true
             - name: host-key
               mountPath: /host-key
@@ -84,9 +88,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: gtnh-minecraft-datadir
-        - name: authorized-keys
+        - name: admin-config
           configMap:
-            name: gtnh-admin-authorized-keys
+            name: gtnh-admin-config
             defaultMode: 0444
         - name: host-key
           secret:

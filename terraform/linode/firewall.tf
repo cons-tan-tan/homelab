@@ -37,4 +37,12 @@ resource "linode_firewall" "gateway" {
     ports    = "25565"
     ipv4     = ["0.0.0.0/0"]
   }
+
+  inbound {
+    label    = "allow-gtnh-admin-ssh"
+    action   = "ACCEPT"
+    protocol = "TCP"
+    ports    = "2222"
+    ipv4     = ["0.0.0.0/0"]
+  }
 }

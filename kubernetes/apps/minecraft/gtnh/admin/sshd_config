@@ -1,0 +1,24 @@
+Port 2222
+ListenAddress 0.0.0.0
+HostKey /run/minecraft-admin/ssh_host_ed25519_key
+PidFile /run/minecraft-admin/sshd.pid
+AuthorizedKeysFile /run/minecraft-admin/authorized_keys
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+AuthenticationMethods publickey
+LoginGraceTime 30
+MaxAuthTries 6
+MaxStartups 5:30:16
+# Both TCP proxies hide the original client address. Disable source penalties
+# so unrelated users are not grouped under the shared upstream proxy address.
+PerSourcePenalties no
+UsePAM no
+AllowUsers minecraft
+DisableForwarding yes
+PermitUserEnvironment no
+StrictModes yes
+PrintMotd no
+LogLevel VERBOSE
+Subsystem sftp internal-sftp

@@ -3,24 +3,10 @@
 ## SSH
 
 ```bash
-ssh -J tunnel@gtnh.constantan.dev -p 2222 minecraft@10.90.0.2
+ssh -p 2222 minecraft@gtnh.constantan.dev
 ```
 
 ログイン先はGTNHデータを格納した`/data`です。公開鍵は[`authorized_keys`](./authorized_keys)で管理します。
-
-### `~/.ssh/config`
-
-```sshconfig
-Host gtnh
-  HostName 10.90.0.2
-  Port 2222
-  User minecraft
-  ProxyJump tunnel@gtnh.constantan.dev
-```
-
-```bash
-ssh gtnh
-```
 
 ## mc-admin
 

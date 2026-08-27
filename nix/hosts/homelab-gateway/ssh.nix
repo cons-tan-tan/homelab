@@ -12,7 +12,8 @@
     ];
   };
 
-  # This account can only open the GTNH admin SSH connection over WireGuard.
+  # Keep the restricted jump account during the direct-SSH migration. Remove
+  # it only after the public path has been deployed and verified end to end.
   # Per-server authorization is enforced again by the target Pod's keys.
   users.users.tunnel = {
     isNormalUser = true;

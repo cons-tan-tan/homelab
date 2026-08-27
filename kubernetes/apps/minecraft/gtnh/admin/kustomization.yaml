@@ -3,11 +3,13 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - host-key-v1.sops.yaml
+  - network-policy.yaml
   - role.yaml
   - rolebinding.yaml
   - service.yaml
   - serviceaccount.yaml
 configMapGenerator:
-  - name: gtnh-admin-authorized-keys
+  - name: gtnh-admin-config
     files:
       - authorized_keys
+      - sshd_config
