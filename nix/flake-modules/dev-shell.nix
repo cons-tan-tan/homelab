@@ -44,11 +44,6 @@
           export KUBECONFIG="$repo_root/.kubeconfig"
           export TALOSCONFIG="$repo_root/talos/clusterconfig/talosconfig"
           unset repo_root
-
-          if secretspec_exports="$(${pkgs.lib.getExe pkgs.secretspec} export --reason "Load homelab development environment" --profile default --scope dev-shell)"; then
-            eval "$secretspec_exports"
-          fi
-          unset secretspec_exports
         '';
       };
 
