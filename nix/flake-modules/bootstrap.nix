@@ -16,7 +16,7 @@
           pkgs.coreutils
           pkgs.git
           pkgs.gnupg
-          pkgs.kubectl
+          (pkgs.callPackage ../packages/kubectl.nix { })
           pkgs.kubernetes-helm
           pkgs.sops
           pkgs.talhelper
@@ -48,14 +48,7 @@
             printf 'talos/talsecret.sops.yaml must be encrypted with SOPS.\n' >&2
             exit 1
           fi
-          (
-            cd "''${TALOS_DIR}"
-            talhelper genconfig \
-              --secret-file talsecret.sops.yaml \
-              --env-file talenv.yaml \
-              --offline-mode \
-              --no-gitignore
-          )
+          bash "''${TALOS_DIR}/generate-config.sh"
           export TALOSCONFIG="''${TALOS_DIR}/clusterconfig/talosconfig"
 
           terraform -chdir="''${REPO_ROOT}/terraform/proxmox/k8s" init
