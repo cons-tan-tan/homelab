@@ -1,22 +1,15 @@
 ---
 clusterName: homelab
-talosVersion: v1.12.2
-kubernetesVersion: v1.35.0
+talosVersion: v1.14.5
+kubernetesVersion: v1.35.10
 endpoint: https://192.168.2.12:6443
 
 imageFactory:
-  # Talhelper 3.1 defaults to a metal-installer path, while the official
-  # registry exposes the secure-boot installer at installer-secureboot.
-  installerURLTmpl: "{{.RegistryURL}}/installer{{if .Secureboot}}-secureboot{{end}}/{{.ID}}:{{.Version}}"
+  # Talos 1.14 publishes installer images under the metal-installer path.
+  installerURLTmpl: "{{.RegistryURL}}/metal-installer{{if .Secureboot}}-secureboot{{end}}/{{.ID}}:{{.Version}}"
 
 cniConfig:
   name: none
-
-patches:
-  - |-
-    cluster:
-      proxy:
-        disabled: true
 
 controlPlane:
   schematic: &talosSchematic
@@ -28,13 +21,25 @@ controlPlane:
   filenameTmpl: "{{.Hostname}}.yaml"
   patches:
     - |-
-      cluster:
-        apiServer:
-          extraArgs:
-            oidc-issuer-url: ${OIDC_ISSUER_URL}
-            oidc-client-id: ${OIDC_CLIENT_ID}
-            oidc-username-claim: email
-            oidc-groups-claim: groups
+      apiVersion: v1alpha1
+      kind: KubeProxyConfig
+      enabled: false
+    - |-
+      apiVersion: v1alpha1
+      kind: KubeAuthenticationConfig
+      configuration:
+        jwt:
+          - issuer:
+              url: ${OIDC_ISSUER_URL}
+              audiences:
+                - ${OIDC_CLIENT_ID}
+            claimMappings:
+              username:
+                claim: email
+                prefix: ""
+              groups:
+                claim: groups
+                prefix: ""
 
 nodes:
   - hostname: k8s-cp-02
