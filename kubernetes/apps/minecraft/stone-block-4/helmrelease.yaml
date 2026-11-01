@@ -12,6 +12,7 @@ spec:
         kind: HelmRepository
         name: itzg-minecraft
   values:
+    replicaCount: 0
     image:
       tag: java21
     serviceAnnotations:

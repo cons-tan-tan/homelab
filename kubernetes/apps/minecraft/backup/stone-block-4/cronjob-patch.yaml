@@ -3,6 +3,7 @@ kind: CronJob
 metadata:
   name: app-backup
 spec:
+  suspend: true
   jobTemplate:
     spec:
       template:
