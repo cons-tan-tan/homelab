@@ -16,7 +16,7 @@
           terraform
           pkgs.google-cloud-sdk
           pkgs.linode-cli
-          pkgs.kubectl
+          (pkgs.callPackage ../packages/kubectl.nix { })
           pkgs.kubelogin-oidc
           pkgs.kubernetes-helm
           pkgs.mcstatus

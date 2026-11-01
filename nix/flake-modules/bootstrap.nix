@@ -16,7 +16,7 @@
           pkgs.coreutils
           pkgs.git
           pkgs.gnupg
-          pkgs.kubectl
+          (pkgs.callPackage ../packages/kubectl.nix { })
           pkgs.kubernetes-helm
           pkgs.sops
           pkgs.talhelper
