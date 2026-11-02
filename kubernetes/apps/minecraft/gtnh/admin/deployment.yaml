@@ -31,7 +31,7 @@ spec:
         - name: ssh
           # Keep the runtime immutable; update this digest manually after an
           # intentionally reviewed minecraft-admin image release.
-          image: ghcr.io/cons-tan-tan/minecraft-admin:main@sha256:af0f262c278823fafc2ac14cb6b31f6157698eed74ac3f7e498b4968fddf33c3
+          image: ghcr.io/cons-tan-tan/minecraft-admin:main@sha256:2b5ad0e75abddd9c373688c5da2cf714d30882a9ec1a7cfa29273ff8cc499559
           imagePullPolicy: IfNotPresent
           env:
             - name: MINECRAFT_DEPLOYMENT

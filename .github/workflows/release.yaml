@@ -21,6 +21,9 @@ jobs:
           - name: minecraft-admin
             package: minecraft-admin-image
             image: ghcr.io/cons-tan-tan/minecraft-admin
+          - name: forge-cfg
+            package: forge-cfg-image
+            image: ghcr.io/cons-tan-tan/forge-cfg
     permissions:
       actions: read
       contents: read
