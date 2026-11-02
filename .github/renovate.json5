@@ -10,9 +10,12 @@
       enabled: false,
     },
     {
-      description: "Open reviewed PRs for the Minecraft admin image digest",
+      description: "Open reviewed PRs for Minecraft tool image digests",
       matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/cons-tan-tan/minecraft-admin"],
+      matchPackageNames: [
+        "ghcr.io/cons-tan-tan/minecraft-admin",
+        "ghcr.io/cons-tan-tan/forge-cfg",
+      ],
       enabled: true,
       pinDigests: true,
       automerge: false,

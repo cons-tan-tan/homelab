@@ -27,11 +27,18 @@ spec:
           - name: datadir
             mountPath: /data
       - name: merge-forge-cfg
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
-        command:
-          - /bin/sh
-          - /runtime-config/merge-forge-cfg.sh
+        # Publish this built image before reconciling the runtime manifests.
+        image: ghcr.io/cons-tan-tan/forge-cfg:main@sha256:15d52a14b2e1aeb4a4c69662b0aec75a5fd406492d2932a2566f9b721d06e4b1
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        args:
+          - --install
+          - /minecraft-tools/forge-cfg
           - /data/serverutilities/serverutilities.cfg
           - /runtime-config/serverutilities.patch.cfg
         volumeMounts:
@@ -40,21 +47,28 @@ spec:
           - name: runtime-config
             mountPath: /runtime-config
             readOnly: true
+          - name: minecraft-tools
+            mountPath: /minecraft-tools
     extraVolumes:
       - volumeMounts:
           - name: runtime-config
             mountPath: /runtime-config
             readOnly: true
+          - name: minecraft-tools
+            mountPath: /minecraft-tools
+            readOnly: true
         volumes:
           - name: runtime-config
             configMap:
               name: gtnh-runtime-config
+          - name: minecraft-tools
+            emptyDir: {}
     startupProbe:
       command:
         - /bin/sh
         - -ec
         - >-
           mc-health &&
-          /bin/sh /runtime-config/merge-forge-cfg.sh --check
+          /minecraft-tools/forge-cfg --check
           /data/serverutilities/serverutilities.cfg
           /runtime-config/serverutilities.patch.cfg

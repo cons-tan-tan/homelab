@@ -14,6 +14,7 @@
         packages = [
           inputs.deploy-rs.packages.${system}.default
           terraform
+          pkgs.go
           pkgs.google-cloud-sdk
           pkgs.linode-cli
           (pkgs.callPackage ../packages/kubectl.nix { })

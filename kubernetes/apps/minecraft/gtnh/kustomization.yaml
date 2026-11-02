@@ -10,7 +10,6 @@ configMapGenerator:
   - name: gtnh-runtime-config
     files:
       - jvm.options
-      - merge-forge-cfg.sh
       - serverutilities.patch.cfg
 configurations:
   - kustomizeconfig.yaml
