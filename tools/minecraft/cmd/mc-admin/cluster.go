@@ -22,7 +22,9 @@ type kubectl struct{ cfg config }
 func (k *kubectl) run(ctx context.Context, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, k.cfg.waitTimeout)
 	defer cancel()
-	command := exec.CommandContext(ctx, "kubectl", append([]string{"--namespace", k.cfg.namespace, "--request-timeout=" + k.cfg.waitTimeout.String()}, args...)...)
+	// Bound the process with the context: --request-timeout prevents kubectl
+	// from falling back to the Pod's in-cluster credentials.
+	command := exec.CommandContext(ctx, "kubectl", append([]string{"--namespace", k.cfg.namespace}, args...)...)
 	output, err := command.Output()
 	if err != nil {
 		if ctx.Err() != nil {
