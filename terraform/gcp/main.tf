@@ -2,21 +2,21 @@ resource "google_storage_bucket" "tfstate" {
   name     = "${local.project_id}-tfstate"
   location = local.region
 
-  # tfstateの誤削除防止
+  # Guard against accidental deletion of Terraform state.
   force_destroy = false
 
-  # バージョニングでstate履歴を保持
+  # Preserve state history through versioning.
   versioning {
     enabled = true
   }
 
-  # 均一なバケットレベルアクセス制御
+  # Uniform bucket-level access control.
   uniform_bucket_level_access = true
 
-  # 公開アクセス防止
+  # Prevent public access.
   public_access_prevention = "enforced"
 
-  # 古いバージョンのライフサイクル管理
+  # Manage the lifecycle of older versions.
   lifecycle_rule {
     condition {
       num_newer_versions = 5

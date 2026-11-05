@@ -1,6 +1,6 @@
 ---
-# pve01: HCAR5000-MI / Ryzen 7 5800U のファン騒音対策。
-# 背景: docs/ops/2026-07-01-pve01-fan-noise/README.md
+# pve01: Fan noise mitigation for HCAR5000-MI / Ryzen 7 5800U.
+# Background: docs/ops/2026-07-01-pve01-fan-noise/README.md
 proxmox_power_profile_enabled: true
 
 proxmox_power_profile_cpu_governor: powersave
