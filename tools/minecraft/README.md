@@ -12,7 +12,7 @@ Each CLI's implementation and tests live together in `cmd/mc-admin` or
 `mc-admin` operates a Kubernetes Deployment and restores local ZIP backups.
 The existing commands, environment variables, confirmation prompts, and retained
 rollback directory format are preserved. See the
-[operator guide](../../kubernetes/apps/minecraft/gtnh/admin/README.md) and
+[operator guide](../../docs/manual/gtnh-admin/README.md) and
 `mc-admin --help` for usage.
 
 Kubernetes operations call `kubectl` directly, without a shell. The Nix package
