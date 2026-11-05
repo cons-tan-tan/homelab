@@ -1,20 +1,20 @@
 ---
-# Proxmox ホスト向けの省電力プロファイル。
-# デフォルトでは無効。適用したいホストの host_vars で明示的に有効化する。
+# Power-saving profile for Proxmox hosts.
+# Disabled by default. Enable explicitly in the target host's host_vars.
 proxmox_power_profile_enabled: false
 
 proxmox_power_profile_service_name: pve-power-profile
 proxmox_power_profile_install_path: /usr/local/sbin/pve-power-profile
 proxmox_power_profile_unit_path: "/etc/systemd/system/{{ proxmox_power_profile_service_name }}.service"
 
-# 無効化した場合は、宣言的に systemd unit と script も削除する。
+# Remove the managed systemd unit and script when disabled.
 proxmox_power_profile_remove_when_disabled: true
 
-# sysfs ノードが boot 中に遅れて現れる可能性を考慮して短時間待つ。
+# Wait briefly for sysfs nodes that may appear late during boot.
 proxmox_power_profile_wait_seconds: 10
 
-# amd-pstate-epp 環境では scaling_available_governors が
-# performance / powersave のみになることがある。
+# On amd-pstate-epp systems, scaling_available_governors may list
+# only performance and powersave.
 proxmox_power_profile_cpu_governor: powersave
 proxmox_power_profile_cpu_epp_enabled: true
 proxmox_power_profile_cpu_epp: balance_power

@@ -1,4 +1,4 @@
-# Talos Linux nocloud ISO（Secure Boot 対応）
+# Talos Linux nocloud ISO with Secure Boot support
 resource "proxmox_virtual_environment_download_file" "talos_iso" {
   for_each = local.node_list
 
@@ -37,11 +37,11 @@ resource "proxmox_virtual_environment_vm" "talos" {
     enabled = true
   }
 
-  # UEFI ブート設定
+  # UEFI boot configuration
   bios    = "ovmf"
   machine = "q35"
 
-  # Secure Boot: 鍵を事前登録しない（セットアップモードで起動し、Talos が自動登録する）
+  # Do not pre-enroll Secure Boot keys; start in setup mode so Talos can enroll them automatically.
   efi_disk {
     datastore_id      = local.node_list[each.value.node_name].datastore_id
     type              = "4m"
@@ -56,17 +56,17 @@ resource "proxmox_virtual_environment_vm" "talos" {
     dedicated = each.value.memory
   }
 
-  # Talos ISO（初回インストール用）
-  # Secure Boot では IDE が使えないため SATA バスを使用
+  # Talos ISO for initial installation
+  # Use SATA because IDE is unavailable with Secure Boot.
   cdrom {
     file_id   = proxmox_virtual_environment_download_file.talos_iso[each.value.node_name].id
     interface = "sata0"
   }
 
-  # ディスク優先でブート（インストール後はディスクから起動）
+  # Boot from disk first after installation.
   boot_order = ["scsi0", "sata0"]
 
-  # ディスク設定
+  # Disk configuration
   scsi_hardware = "virtio-scsi-pci"
   disk {
     interface    = "scsi0"
@@ -75,7 +75,7 @@ resource "proxmox_virtual_environment_vm" "talos" {
     file_format  = "raw"
   }
 
-  # データディスク（local-path-provisioner 用）
+  # Data disk for local-path-provisioner
   dynamic "disk" {
     for_each = try(each.value.data_disk_size, null) != null ? [each.value.data_disk_size] : []
     content {
@@ -91,8 +91,8 @@ resource "proxmox_virtual_environment_vm" "talos" {
     bridge = "vmbr0"
   }
 
-  # ネットワーク設定（nocloud）
-  # Secure Boot では IDE が使えないため SATA バスを使用
+  # Network configuration (nocloud)
+  # Use SATA because IDE is unavailable with Secure Boot.
   initialization {
     datastore_id = local.node_list[each.value.node_name].datastore_id
     interface    = "sata1"

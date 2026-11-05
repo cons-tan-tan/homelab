@@ -1,8 +1,8 @@
 provider "linode" {
-  # linode-cli configure で作成したブラウザ認証済みプロファイルを共有する。
+  # Reuse the browser-authenticated profile created by linode-cli configure.
   config_path    = pathexpand("~/.config/linode-cli")
   config_profile = "constantan"
 
-  # ローカルファイルからのCustom Imageアップロードに必要。
+  # Required to upload a Custom Image from a local file.
   api_version = "v4beta"
 }

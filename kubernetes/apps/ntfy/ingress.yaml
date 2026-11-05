@@ -5,8 +5,8 @@ metadata:
   namespace: ntfy
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
-    # TLS非対応デバイス（Raspberry Pi Pico等）からのHTTPアクセスを許可する。
-    # ブラウザは .dev のHSTSプリロードにより自動的にHTTPSを使用する。
+    # Allow HTTP access from devices without TLS support, such as the Raspberry Pi Pico.
+    # Browsers automatically use HTTPS because .dev is HSTS-preloaded.
     ingress.cilium.io/force-https: "disabled"
 spec:
   tls:
