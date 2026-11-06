@@ -17,6 +17,7 @@
     inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
+        ./nix/flake-modules/actions-lock.nix
         ./nix/flake-modules/bootstrap.nix
         ./nix/flake-modules/dev-shell.nix
         ./nix/flake-modules/deploy.nix
