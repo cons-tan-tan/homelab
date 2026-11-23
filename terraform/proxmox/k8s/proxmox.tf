@@ -1,13 +1,15 @@
-# Talos Linux nocloud ISO with Secure Boot support
 resource "proxmox_virtual_environment_download_file" "talos_iso" {
   for_each = local.node_list
 
-  node_name    = each.value.name
+  node_name    = each.key
   datastore_id = each.value.datastore_id
   content_type = "iso"
   url          = data.talos_image_factory_urls.this.urls.iso_secureboot
-  file_name    = "talos-${local.talconfig.talosVersion}-nocloud-amd64-secureboot.iso"
+  file_name    = "talos-${local.talconfig.talosVersion}-${talos_image_factory_schematic.this.id}-nocloud-amd64-secureboot.iso"
 
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "proxmox_virtual_environment_vm" "talos" {
@@ -19,8 +21,11 @@ resource "proxmox_virtual_environment_vm" "talos" {
 
   lifecycle {
     precondition {
-      condition     = toset(keys(local.talos_nodes)) == toset(keys(local.vm_hardware))
-      error_message = "talconfig nodes and Proxmox VM hardware definitions must match."
+      condition = (
+        toset(keys(local.talos_nodes)) == toset(keys(local.vm_hardware)) &&
+        toset(keys(local.talos_nodes)) == toset(keys(local.node_hosts))
+      )
+      error_message = "Talos nodes, VM hardware and Proxmox host placement must match."
     }
     precondition {
       condition = (
@@ -33,15 +38,16 @@ resource "proxmox_virtual_environment_vm" "talos" {
     }
   }
 
+  reboot_after_update = false
+
   agent {
     enabled = true
   }
 
-  # UEFI boot configuration
   bios    = "ovmf"
   machine = "q35"
 
-  # Do not pre-enroll Secure Boot keys; start in setup mode so Talos can enroll them automatically.
+  # Talos enrolls its own Secure Boot keys in UEFI setup mode.
   efi_disk {
     datastore_id      = local.node_list[each.value.node_name].datastore_id
     type              = "4m"
@@ -56,17 +62,14 @@ resource "proxmox_virtual_environment_vm" "talos" {
     dedicated = each.value.memory
   }
 
-  # Talos ISO for initial installation
-  # Use SATA because IDE is unavailable with Secure Boot.
+  # The boot ISO and NoCloud drive use SATA for Secure Boot.
   cdrom {
     file_id   = proxmox_virtual_environment_download_file.talos_iso[each.value.node_name].id
     interface = "sata0"
   }
 
-  # Boot from disk first after installation.
   boot_order = ["scsi0", "sata0"]
 
-  # Disk configuration
   scsi_hardware = "virtio-scsi-pci"
   disk {
     interface    = "scsi0"
@@ -75,9 +78,9 @@ resource "proxmox_virtual_environment_vm" "talos" {
     file_format  = "raw"
   }
 
-  # Data disk for local-path-provisioner
+  # The local-path provisioner stores persistent volumes on the second disk.
   dynamic "disk" {
-    for_each = try(each.value.data_disk_size, null) != null ? [each.value.data_disk_size] : []
+    for_each = try(each.value.data_disk_size[*], [])
     content {
       interface    = "scsi1"
       datastore_id = local.node_list[each.value.node_name].datastore_id
@@ -91,8 +94,13 @@ resource "proxmox_virtual_environment_vm" "talos" {
     bridge = "vmbr0"
   }
 
-  # Network configuration (nocloud)
-  # Use SATA because IDE is unavailable with Secure Boot.
+  network_device {
+    model  = "virtio"
+    bridge = proxmox_virtual_environment_sdn_vnet.nodes[each.value.node_name].id
+  }
+
+  depends_on = [proxmox_virtual_environment_sdn_applier.nodes]
+
   initialization {
     datastore_id = local.node_list[each.value.node_name].datastore_id
     interface    = "sata1"
@@ -103,7 +111,7 @@ resource "proxmox_virtual_environment_vm" "talos" {
       }
     }
     dns {
-      domain  = local.proxmox.dns_domain
+      domain  = "local"
       servers = each.value.dns_servers
     }
   }

@@ -70,9 +70,10 @@ No BIOS or EC update was performed.
 
 ## Persistent fix
 
-The [Ansible role](../../../ansible/roles/proxmox_power_profile/) and
-[host configuration](../../../ansible/host_vars/pve01.yaml) manage the applied
-settings. The `pve-power-profile.service` oneshot service runs before
+The original deployment used Ansible. Its successor is the
+[System Manager service](../../../nix/hosts/proxmox/default.nix) and
+[power-profile script](../../../nix/hosts/proxmox/pve01-power-profile.sh).
+The `pve-power-profile.service` oneshot service runs before
 `pve-guests.service`. A power-profile failure is reported by systemd without
 blocking VM startup, since noise reduction should not prevent VMs from running.
 

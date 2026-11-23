@@ -11,6 +11,10 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    system-manager = {
+      url = "github:numtide/system-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -24,6 +28,7 @@
         ./nix/flake-modules/docs.nix
         ./nix/flake-modules/minecraft-admin.nix
         ./nix/flake-modules/nixos.nix
+        ./nix/flake-modules/proxmox.nix
       ];
 
       systems = [

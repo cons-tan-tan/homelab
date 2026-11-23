@@ -5,9 +5,6 @@ locals {
   talos_nodes = {
     for node in local.talconfig.nodes : node.hostname => node
   }
-  control_plane_names = [
-    for name, node in local.talos_nodes : name if node.controlPlane
-  ]
   control_plane_nodes = {
     for name, node in local.talos_nodes : name => node if node.controlPlane
   }
@@ -22,44 +19,30 @@ locals {
     client_key         = local.talos_context.key
   }
 
-  proxmox = {
-    dns_domain = "local"
-  }
-
-  node_list = {
-    "pve01" = {
-      name         = "pve01"
-      ip           = "192.168.1.1"
-      datastore_id = "local"
-    }
-    "pve02" = {
-      name         = "pve02"
-      ip           = "192.168.1.2"
-      datastore_id = "local"
-    }
-  }
+  node_network = jsondecode(file("${path.module}/../../../proxmox/node-network.json"))
+  node_list    = local.node_network.hosts
+  node_hosts   = transpose({ for host, spec in local.node_list : host => spec.nodes })
+  node_prefix  = tonumber(split("/", local.node_network.cidr)[1])
+  host_subnets = [for host in local.node_list : host.subnet]
 
   vm_hardware = {
     "k8s-cp-02" = {
-      node_name = local.node_list.pve02.name
       vm_id     = 2001
       cpu_cores = 4
-      memory    = 8192
+      memory    = 8 * 1024
       disk_size = 50
     }
     "k8s-wk-02" = {
-      node_name      = local.node_list.pve02.name
       vm_id          = 2101
       cpu_cores      = 10
-      memory         = 73728 # 72GB
+      memory         = 72 * 1024
       disk_size      = 200
       data_disk_size = 100
     }
     "k8s-wk-01" = {
-      node_name = local.node_list.pve01.name
       vm_id     = 1101
       cpu_cores = 6
-      memory    = 24576 # 24GB
+      memory    = 24 * 1024
       disk_size = 100
     }
   }
@@ -76,16 +59,16 @@ locals {
           if route.network == "0.0.0.0/0"
         ] if interface.interface == "ens18"
       ])
-      nameservers = node.nameservers
     }
   }
 
   vm_list = {
     for name, hardware in local.vm_hardware : name => merge(hardware, {
+      node_name   = one(local.node_hosts[name])
       ip          = try(local.talos_nodes[name].ipAddress, null)
       address     = try(one(local.talos_networks[name].addresses), null)
       gateway     = try(one(local.talos_networks[name].default_gateways), null)
-      dns_servers = try(local.talos_networks[name].nameservers, [])
+      dns_servers = try(local.talos_nodes[name].nameservers, [])
     })
   }
 }

@@ -1,15 +1,4 @@
-#!/usr/bin/env bash
-# Managed by Ansible: roles/proxmox_power_profile
-#
-# Apply a conservative power profile for Proxmox hosts.
-# This intentionally writes to sysfs at boot; it does not modify BIOS settings.
-
-set -euo pipefail
-
-WAIT_SECONDS={{ proxmox_power_profile_wait_seconds | int }}
-if (( WAIT_SECONDS < 1 )); then
-  WAIT_SECONDS=1
-fi
+readonly WAIT_SECONDS=10
 
 log() {
   echo "[pve-power-profile] $*"
@@ -48,7 +37,7 @@ write_value() {
 }
 
 set_cpu_governor() {
-  local desired_governor="{{ proxmox_power_profile_cpu_governor }}"
+  local desired_governor="powersave"
   local attempt
   local gov_file
   local available_file
@@ -63,14 +52,14 @@ set_cpu_governor() {
     files=(/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_governor)
     shopt -u nullglob
 
-    if (( {% raw %}${#files[@]}{% endraw %} > 0 )); then
+    if (( ${#files[@]} > 0 )); then
       break
     fi
 
     sleep 1
   done
 
-  if (( {% raw %}${#files[@]}{% endraw %} == 0 )); then
+  if (( ${#files[@]} == 0 )); then
     log "failed: no CPU scaling_governor files found after ${WAIT_SECONDS}s"
     return 1
   fi
@@ -113,9 +102,8 @@ set_cpu_governor() {
 }
 
 set_cpu_epp() {
-{% if proxmox_power_profile_cpu_epp_enabled | bool %}
-  local desired_epp="{{ proxmox_power_profile_cpu_epp }}"
-  local fallback_epps=({% for epp in proxmox_power_profile_cpu_epp_fallbacks %}"{{ epp }}"{% if not loop.last %} {% endif %}{% endfor %})
+  local desired_epp="balance_power"
+  local fallback_epps=(power balance_performance default performance)
   local attempt
   local epp_file
   local available_file
@@ -131,14 +119,14 @@ set_cpu_epp() {
     files=(/sys/devices/system/cpu/cpu[0-9]*/cpufreq/energy_performance_preference)
     shopt -u nullglob
 
-    if (( {% raw %}${#files[@]}{% endraw %} > 0 )); then
+    if (( ${#files[@]} > 0 )); then
       break
     fi
 
     sleep 1
   done
 
-  if (( {% raw %}${#files[@]}{% endraw %} == 0 )); then
+  if (( ${#files[@]} == 0 )); then
     log "failed: no CPU energy_performance_preference files found after ${WAIT_SECONDS}s"
     return 1
   fi
@@ -175,7 +163,7 @@ set_cpu_epp() {
   done
 
   if (( applied == 0 )); then
-    log "failed: CPU EPP '{{ proxmox_power_profile_cpu_epp }}' was not applied to any CPU"
+    log "failed: CPU EPP 'balance_power' was not applied to any CPU"
     return 1
   fi
 
@@ -186,15 +174,10 @@ set_cpu_epp() {
 
   log "CPU EPP applied to ${applied} file(s)"
   return 0
-{% else %}
-  log "skip CPU EPP: disabled by configuration"
-  return 0
-{% endif %}
 }
 
 set_amdgpu_profile() {
-{% if proxmox_power_profile_amdgpu_enabled | bool %}
-  local gpu_path="/sys/bus/pci/drivers/amdgpu/{{ proxmox_power_profile_amdgpu_pci_address }}"
+  local gpu_path="/sys/bus/pci/drivers/amdgpu/0000:05:00.0"
   local attempt
   local applied=0
   local failed=0
@@ -213,13 +196,13 @@ set_amdgpu_profile() {
     return 1
   fi
 
-  if write_value "$gpu_path/power_dpm_force_performance_level" "{{ proxmox_power_profile_amdgpu_force_performance_level }}"; then
+  if write_value "$gpu_path/power_dpm_force_performance_level" "auto"; then
     applied=$((applied + 1))
   else
     failed=$((failed + 1))
   fi
 
-  if write_value "$gpu_path/power_dpm_state" "{{ proxmox_power_profile_amdgpu_dpm_state }}"; then
+  if write_value "$gpu_path/power_dpm_state" "balanced"; then
     applied=$((applied + 1))
   else
     failed=$((failed + 1))
@@ -237,10 +220,6 @@ set_amdgpu_profile() {
 
   log "amdgpu power profile applied to ${applied} file(s)"
   return 0
-{% else %}
-  log "skip amdgpu: disabled by configuration"
-  return 0
-{% endif %}
 }
 
 main() {

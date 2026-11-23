@@ -1,19 +1,12 @@
 { inputs, ... }:
 {
   perSystem =
-    { system, ... }:
-    let
-      pkgs = import inputs.nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-      };
-      terraform = inputs.nixpkgs-terraform.packages.${system}."terraform-1.14.4";
-    in
+    { pkgs, system, ... }:
     {
       devShells.default = pkgs.mkShell {
         packages = [
           inputs.deploy-rs.packages.${system}.default
-          terraform
+          inputs.nixpkgs-terraform.packages.${system}."terraform-1.14.4"
           pkgs.go
           pkgs.google-cloud-sdk
           pkgs.linode-cli
@@ -25,8 +18,8 @@
           pkgs.talhelper
           pkgs.fluxcd
           pkgs.gnupg
-          # Keep Ansible dependencies out of the main Python environment.
-          (pkgs.python3.withPackages (ps: [ ps.ansible-core ]))
+          inputs.system-manager.packages.${system}.default
+          pkgs.jq
           pkgs.sops
           pkgs.secretspec
           pkgs.age
