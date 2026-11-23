@@ -20,6 +20,9 @@ spec:
     ipam:
       mode: kubernetes
     kubeProxyReplacement: true
+    devices:
+      - ens18
+      - ens19
     l2announcements:
       enabled: true
     externalIPs:

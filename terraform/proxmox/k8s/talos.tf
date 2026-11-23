@@ -9,25 +9,23 @@ resource "talos_machine_configuration_apply" "nodes" {
     "${local.clusterconfig_dir}/${each.key}.yaml"
   ))
 
-  # Apply changes which need a reboot on the next explicit reboot instead of
-  # restarting multiple nodes during a Terraform run.
+  # A single apply could otherwise reboot several nodes together.
   apply_mode = "staged_if_needing_reboot"
 
   depends_on = [proxmox_virtual_environment_vm.talos]
 
   lifecycle {
     precondition {
-      condition     = length(local.control_plane_names) == 1
+      condition     = length(local.control_plane_nodes) == 1
       error_message = "Exactly one Talos control-plane node is currently required."
     }
     replace_triggered_by = [
-      proxmox_virtual_environment_vm.talos[each.key].mac_addresses,
+      proxmox_virtual_environment_vm.talos[each.key].id,
     ]
   }
 }
 
 resource "talos_machine_bootstrap" "this" {
-  # This repository currently models one bootstrap target and one control plane.
   for_each = local.control_plane_nodes
 
   node     = each.value.ipAddress
@@ -38,8 +36,9 @@ resource "talos_machine_bootstrap" "this" {
   depends_on = [talos_machine_configuration_apply.nodes]
 
   lifecycle {
+    # Triggering on the whole VM would bootstrap etcd again on an in-place NIC change.
     replace_triggered_by = [
-      proxmox_virtual_environment_vm.talos[each.key].mac_addresses,
+      proxmox_virtual_environment_vm.talos[each.key].id,
     ]
   }
 }
