@@ -7,11 +7,10 @@ Configuration for my personal homelab. Terraform provisions infrastructure, Nix 
 | Directory | Purpose |
 | --- | --- |
 | [`terraform/`](terraform/) | Infrastructure provisioning for local and cloud resources. |
-| [`nix/`](nix/) | NixOS host configurations, packages, and development tooling. |
+| [`nix/`](nix/) | Host configurations, packages, and development tooling. |
 | [`talos/`](talos/) | Talos cluster definitions and configuration generation. |
 | [`kubernetes/`](kubernetes/) | Flux configuration and Kubernetes resources. |
-| [`ansible/`](ansible/) | Ansible playbooks and roles for Proxmox hosts. |
-| [`proxmox/`](proxmox/) | Proxmox installation configuration. |
+| [`proxmox/`](proxmox/) | Proxmox installation configuration and the Kubernetes node network inventory. |
 | [`tools/`](tools/) | Administration and configuration tools. |
 | [`docs/`](docs/) | Design documents, operational guides, and investigation notes. |
 
