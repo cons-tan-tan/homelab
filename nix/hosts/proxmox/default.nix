@@ -7,6 +7,8 @@
   ...
 }:
 let
+  boostPath = "/sys/devices/system/cpu/cpufreq/boost";
+  boostValue = "0";
   powerProfile = pkgs.writeShellApplication {
     name = "pve-power-profile";
     runtimeInputs = [
@@ -73,6 +75,10 @@ in
   # Only Proxmox's per-zone dnsmasq instances should listen on the VNets.
   systemd.maskedUnits = [ "dnsmasq.service" ];
 
+  systemd.tmpfiles.settings."pve-cpu-boost" = lib.mkIf (hostName == "pve01") {
+    ${boostPath}.w.argument = boostValue;
+  };
+
   systemd.services = {
     proxmox-node-routing = {
       description = "Apply IPv4 forwarding and the Proxmox node OSPF configuration";
@@ -105,6 +111,10 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = lib.getExe powerProfile;
+        ExecStartPost = [
+          "/usr/bin/systemd-tmpfiles --create pve-cpu-boost.conf"
+          "${lib.getExe pkgs.gnugrep} -qx ${boostValue} ${boostPath}"
+        ];
         RemainAfterExit = true;
       };
     };
