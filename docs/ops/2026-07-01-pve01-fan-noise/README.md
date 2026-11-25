@@ -71,8 +71,11 @@ No BIOS or EC update was performed.
 ## Persistent fix
 
 The original deployment used Ansible. Its successor is the
-[System Manager service](../../../nix/hosts/proxmox/default.nix) and
-[power-profile script](../../../nix/hosts/proxmox/pve01-power-profile.sh).
+[pve01 System Manager module](../../../nix/hosts/proxmox/pve01-power-profile.nix).
+It disables CPU boost and declares the governor, EPP preference order, and GPU
+settings. The [service helper](../../../nix/hosts/proxmox/pve01-power-profile.sh)
+waits for the devices, selects a supported EPP for each CPU policy, and verifies
+the applied settings.
 The `pve-power-profile.service` oneshot service runs before
 `pve-guests.service`. A power-profile failure is reported by systemd without
 blocking VM startup, since noise reduction should not prevent VMs from running.
